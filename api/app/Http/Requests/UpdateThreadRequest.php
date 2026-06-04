@@ -12,7 +12,7 @@ class UpdateThreadRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,7 +23,8 @@ class UpdateThreadRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'title' => ['sometimes', 'required', 'string', 'max:255'],
+            'body'  => ['sometimes', 'required', 'string'],
         ];
     }
 }

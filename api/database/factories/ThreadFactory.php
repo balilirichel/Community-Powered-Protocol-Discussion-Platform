@@ -2,7 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\Protocol;
 use App\Models\Thread;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -10,15 +12,13 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class ThreadFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
-            //
+            'user_id'     => User::factory(),
+            'protocol_id' => Protocol::factory(),
+            'title'       => $this->faker->sentence(6),
+            'body'        => $this->faker->paragraphs(3, true),
         ];
     }
 }
