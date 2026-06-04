@@ -23,7 +23,11 @@ class UpdateProtocolRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'title'   => ['sometimes', 'required', 'string', 'max:255'],
+            'content' => ['sometimes', 'required', 'string'],
+            'tags'    => ['nullable', 'array'],
+            'tags.*'  => ['string', 'max:50'],
+            'rating'  => ['nullable', 'numeric', 'min:0', 'max:5'],
         ];
     }
 }

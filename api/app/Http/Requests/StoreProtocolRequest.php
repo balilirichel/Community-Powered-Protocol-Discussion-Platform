@@ -12,7 +12,7 @@ class StoreProtocolRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -20,10 +20,14 @@ class StoreProtocolRequest extends FormRequest
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
-    public function rules(): array
+     public function rules(): array
     {
         return [
-            //
+            'title'   => ['required', 'string', 'max:255'],
+            'content' => ['required', 'string'],
+            'tags'    => ['nullable', 'array'],
+            'tags.*'  => ['string', 'max:50'],
+            'rating'  => ['nullable', 'numeric', 'min:0', 'max:5'],
         ];
     }
 }
