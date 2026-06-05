@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ProtocolController;
 use App\Http\Controllers\Api\ThreadController;
 use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\VoteController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -28,6 +30,10 @@ Route::get('protocols/{protocol}/threads/{thread}', [ThreadController::class, 's
 // Public comment routes
 Route::get('threads/{thread}/comments',             [CommentController::class, 'index']);
 Route::get('threads/{thread}/comments/{comment}',   [CommentController::class, 'show']);
+
+// Public review routes
+Route::get('protocols/{protocol}/reviews',          [ReviewController::class, 'index']);
+Route::get('protocols/{protocol}/reviews/{review}', [ReviewController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [UserController::class, 'logout']);
@@ -65,5 +71,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/{thread}/comments/{comment}', [CommentController::class, 'update']);
         Route::delete('/{thread}/comments/{comment}', [CommentController::class, 'destroy']);
     });
+
+    //votes routes
+     Route::post('threads/{thread}/vote',    [VoteController::class, 'voteThread']);
+    Route::delete('threads/{thread}/vote',  [VoteController::class, 'unvoteThread']);
+
+    Route::post('comments/{comment}/vote',  [VoteController::class, 'voteComment']);
+    Route::delete('comments/{comment}/vote',[VoteController::class, 'unvoteComment']);
    
 });

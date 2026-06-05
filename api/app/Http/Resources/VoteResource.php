@@ -7,13 +7,19 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class VoteResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id'            => $this->id,
+            'value'         => $this->value,
+            'voter'         => [
+                'id'   => $this->user->id,
+                'name' => $this->user->name,
+            ],
+            'voteable_type' => $this->voteable_type,
+            'voteable_id'   => $this->voteable_id,
+            'created_at'    => $this->created_at->toISOString(),
+            'updated_at'    => $this->updated_at->toISOString(),
+        ];
     }
 }

@@ -8,19 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('protocols', function (Blueprint $table) {
+        Schema::create('votes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->string('title');
-            $table->text('content');
-            $table->json('tags')->nullable();
-            $table->decimal('rating', 3, 2)->default(0.00); 
+            
+        
+            $table->morphs('voteable'); 
+            
+            $table->tinyInteger('value'); //  1 for upvote, -1 for downvote
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('protocols');
+        Schema::dropIfExists('votes');
     }
 };
