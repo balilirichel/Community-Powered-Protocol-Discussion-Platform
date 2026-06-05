@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ProtocolController;
 use App\Http\Controllers\Api\ThreadController;
+use App\Http\Controllers\Api\CommentController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -24,6 +25,9 @@ Route::get('protocols/{protocol}', [ProtocolController::class, 'show']);
 Route::get('protocols/{protocol}/threads', [ThreadController::class, 'index']);
 Route::get('protocols/{protocol}/threads/{thread}', [ThreadController::class, 'show']);
 
+// Public comment routes
+Route::get('threads/{thread}/comments',             [CommentController::class, 'index']);
+Route::get('threads/{thread}/comments/{comment}',   [CommentController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [UserController::class, 'logout']);
@@ -44,6 +48,22 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/{protocol}/threads/{thread}', [ThreadController::class, 'update']);
         Route::delete('/{protocol}/threads/{thread}', [ThreadController::class, 'destroy']);
 
+        // review routes
+        Route::post('/{protocol}/reviews',                 [ReviewController::class, 'store']);
+        Route::put('/{protocol}/reviews/{review}',         [ReviewController::class, 'update']);
+        Route::patch('/{protocol}/reviews/{review}',       [ReviewController::class, 'update']);
+        Route::delete('/{protocol}/reviews/{review}',      [ReviewController::class, 'destroy']);
+    
+    });
+
+     // comment routes
+    Route::group(['prefix' => 'threads'], function () {
+       
+        //comment routes
+        Route::post('/{thread}/comments', [CommentController::class, 'store']);
+        Route::put('/{thread}/comments/{comment}', [CommentController::class, 'update']);
+        Route::patch('/{thread}/comments/{comment}', [CommentController::class, 'update']);
+        Route::delete('/{thread}/comments/{comment}', [CommentController::class, 'destroy']);
     });
    
 });

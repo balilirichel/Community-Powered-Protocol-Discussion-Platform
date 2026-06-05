@@ -9,6 +9,11 @@ use App\Models\Protocol;
 use App\Models\Thread;
 use App\Policies\ProtocolPolicy;
 use App\Policies\ThreadPolicy;
+use App\Models\Review;
+use App\Policies\ReviewPolicy;
+use App\Models\Comment;
+use App\Policies\CommentPolicy;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -33,5 +38,7 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(Protocol::class, ProtocolPolicy::class);
         Gate::policy(Thread::class, ThreadPolicy::class);
+        Gate::policy(Comment::class, CommentPolicy::class);
+        Gate::policy(Review::class, ReviewPolicy::class);
     }
 }

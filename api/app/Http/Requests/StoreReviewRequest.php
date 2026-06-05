@@ -12,7 +12,7 @@ class StoreReviewRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -20,10 +20,11 @@ class StoreReviewRequest extends FormRequest
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
-    public function rules(): array
+     public function rules(): array
     {
         return [
-            //
+            'rating'   => ['required', 'integer', 'min:1', 'max:5'],
+            'feedback' => ['nullable', 'string'],
         ];
     }
 }

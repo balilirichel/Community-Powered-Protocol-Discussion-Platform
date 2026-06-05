@@ -11,9 +11,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ProtocolController extends Controller
-{
+{   
+    use AuthorizesRequests;
     /**
      * GET /api/protocols
      * Supports filters: sort_by = recent | most_reviewed | highest_rated | most_upvoted

@@ -7,13 +7,24 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class CommentResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id'              => $this->id,
+            'body'            => $this->body,
+            'parent_id'       => $this->parent_id,
+            'author'          => [
+                'id'   => $this->user->id,
+                'name' => $this->user->name,
+            ],
+            'thread_id'       => $this->thread_id,
+            'upvotes_count'   => $this->whenCounted('upvotes_count'),
+            'downvotes_count' => $this->whenCounted('downvotes_count'),
+            'replies'         => CommentResource::collection(
+                                    $this->whenLoaded('replies')
+                                ),
+            'created_at'      => $this->created_at->toISOString(),
+            'updated_at'      => $this->updated_at->toISOString(),
+        ];
     }
 }
