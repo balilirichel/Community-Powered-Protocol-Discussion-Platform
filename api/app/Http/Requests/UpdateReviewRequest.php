@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreCommentRequest extends FormRequest
+class UpdateReviewRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -20,11 +20,12 @@ class StoreCommentRequest extends FormRequest
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
-    public function rules(): array
+     public function rules(): array
     {
         return [
-            'body'      => ['required', 'string'],
-            'parent_id' => ['nullable', 'integer', 'exists:comments,id'],
+            'rating'   => ['sometimes', 'required', 'integer', 'min:1', 'max:5'],
+            'feedback' => ['nullable', 'string'],
         ];
     }
+
 }

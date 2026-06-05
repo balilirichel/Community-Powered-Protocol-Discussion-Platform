@@ -3,47 +3,136 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreReviewRequest;
+use App\Http\Requests\UpdateReviewRequest;
+use App\Http\Resources\ReviewResource;
+use App\Models\Protocol;
+use App\Models\Review;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ReviewController extends Controller
-{
+{   
+    use AuthorizesRequests;
+
     /**
-     * Display a listing of the resource.
+     * GET /api/protocols/{protocol}/reviews
+     * Supports: sort_by = recent | highest_rated
      */
-    public function index()
+    public function index(Request $request, Protocol $protocol): AnonymousResourceCollection
     {
-        //
+        $query = $protocol->reviews()
+            ->with(['user', 'protocol']);
+
+        match ($request->input('sort_by')) {
+            'highest_rated' => $query->orderByDesc('rating'),
+            default         => $query->orderByDesc('created_at'),
+        };
+
+        $reviews = $query->paginate(15);
+
+        return ReviewResource::collection($reviews);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * POST /api/protocols/{protocol}/reviews
+     * A user can only post one review per protocol.
      */
-    public function store(Request $request)
+    public function store(StoreReviewRequest $request, Protocol $protocol): ReviewResource|JsonResponse
     {
-        //
+        $alreadyReviewed = $protocol->reviews()
+            ->where('user_id', Auth::id())
+            ->exists();
+
+        if ($alreadyReviewed) {
+            return response()->json([
+                'message' => 'You have already reviewed this protocol.',
+            ], 422);
+        }
+
+        $review = $protocol->reviews()->create([
+            'user_id'  => Auth::id(),
+            'rating'   => $request->input('rating'),
+            'feedback' => $request->input('feedback'),
+        ]);
+
+        // Recalculate and update the protocol's aggregate rating
+        $this->syncProtocolRating($protocol);
+
+        $review->load(['user', 'protocol']);
+
+        return new ReviewResource($review);
     }
 
     /**
-     * Display the specified resource.
+     * GET /api/protocols/{protocol}/reviews/{review}
      */
-    public function show(string $id)
+    public function show(Protocol $protocol, Review $review): ReviewResource
     {
-        //
+        $this->ensureBelongsToProtocol($protocol, $review);
+
+        $review->load(['user', 'protocol']);
+
+        return new ReviewResource($review);
     }
 
     /**
-     * Update the specified resource in storage.
+     * PUT|PATCH /api/protocols/{protocol}/reviews/{review}
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateReviewRequest $request, Protocol $protocol, Review $review): ReviewResource
     {
-        //
+        $this->ensureBelongsToProtocol($protocol, $review);
+        $this->authorize('update', $review);
+
+        $review->update($request->validated());
+
+        // Recalculate and update the protocol's aggregate rating
+        $this->syncProtocolRating($protocol);
+
+        $review->load(['user', 'protocol']);
+
+        return new ReviewResource($review);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * DELETE /api/protocols/{protocol}/reviews/{review}
      */
-    public function destroy(string $id)
+    public function destroy(Protocol $protocol, Review $review): JsonResponse
     {
-        //
+        $this->ensureBelongsToProtocol($protocol, $review);
+        $this->authorize('delete', $review);
+
+        $review->delete();
+
+        // Recalculate and update the protocol's aggregate rating
+        $this->syncProtocolRating($protocol);
+
+        return response()->json([
+            'message' => 'Review deleted successfully.',
+        ], 200);
+    }
+
+    /**
+     * Recalculate the protocol's average rating from all its reviews
+     * and persist it to the protocols table.
+     */
+    private function syncProtocolRating(Protocol $protocol): void
+    {
+        $average = $protocol->reviews()->avg('rating') ?? 0.00;
+
+        $protocol->update(['rating' => round($average, 2)]);
+    }
+
+    /**
+     * Ensure the review belongs to the given protocol.
+     */
+    private function ensureBelongsToProtocol(Protocol $protocol, Review $review): void
+    {
+        if ($review->protocol_id !== $protocol->id) {
+            abort(404, 'Review not found under this protocol.');
+        }
     }
 }
