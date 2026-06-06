@@ -12,6 +12,11 @@ class ThreadObserver
     public function created(Thread $thread): void
     {
         //
+        try {
+            $thread->searchable();
+        } catch (\Throwable $e) {
+            // noop
+        }
     }
 
     /**
@@ -20,6 +25,11 @@ class ThreadObserver
     public function updated(Thread $thread): void
     {
         //
+        try {
+            $thread->searchable();
+        } catch (\Throwable $e) {
+            // noop
+        }
     }
 
     /**
@@ -28,6 +38,11 @@ class ThreadObserver
     public function deleted(Thread $thread): void
     {
         //
+        try {
+            $thread->unsearchable();
+        } catch (\Throwable $e) {
+            // noop
+        }
     }
 
     /**
@@ -36,6 +51,11 @@ class ThreadObserver
     public function restored(Thread $thread): void
     {
         //
+        try {
+            $thread->searchable();
+        } catch (\Throwable $e) {
+            // noop
+        }
     }
 
     /**
@@ -44,5 +64,10 @@ class ThreadObserver
     public function forceDeleted(Thread $thread): void
     {
         //
+        try {
+            $thread->unsearchable();
+        } catch (\Throwable $e) {
+            // noop
+        }
     }
 }

@@ -11,7 +11,11 @@ class ProtocolObserver
      */
     public function created(Protocol $protocol): void
     {
-        //
+        try {
+            $protocol->searchable();
+        } catch (\Throwable $e) {
+            // Keep observer isolated: do not throw on indexing failure.
+        }
     }
 
     /**
@@ -19,7 +23,11 @@ class ProtocolObserver
      */
     public function updated(Protocol $protocol): void
     {
-        //
+        try {
+            $protocol->searchable();
+        } catch (\Throwable $e) {
+            // noop
+        }
     }
 
     /**
@@ -27,7 +35,11 @@ class ProtocolObserver
      */
     public function deleted(Protocol $protocol): void
     {
-        //
+        try {
+            $protocol->unsearchable();
+        } catch (\Throwable $e) {
+            // noop
+        }
     }
 
     /**
@@ -35,7 +47,11 @@ class ProtocolObserver
      */
     public function restored(Protocol $protocol): void
     {
-        //
+        try {
+            $protocol->searchable();
+        } catch (\Throwable $e) {
+            // noop
+        }
     }
 
     /**
@@ -43,6 +59,10 @@ class ProtocolObserver
      */
     public function forceDeleted(Protocol $protocol): void
     {
-        //
+        try {
+            $protocol->unsearchable();
+        } catch (\Throwable $e) {
+            // noop
+        }
     }
 }
