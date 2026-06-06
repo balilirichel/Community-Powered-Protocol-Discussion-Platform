@@ -10,6 +10,7 @@ A full-stack platform for creating, sharing, and discussing community protocols.
 - [Backend Setup](#backend-setup)
 - [Frontend Setup](#frontend-setup)
 - [Typesense Configuration](#typesense-configuration)
+  - [Running Typesense Locally with Docker](#running-typesense-locally-with-docker)
 - [API Overview](#api-overview)
   - [Authentication](#authentication)
   - [Protocols](#protocols)
@@ -108,6 +109,69 @@ TYPESENSE_API_KEY=your-search-only-api-key
 ```
 
 > **Important:** The frontend must use a **search-only API key**, never the admin key. Generate one from your Typesense dashboard or via the Typesense Keys API.
+
+### Running Typesense Locally with Docker
+
+If you don't have a cloud Typesense instance, you can run one locally using Docker.
+
+**Step 1 — Start the Typesense container**
+
+```bash
+docker run -d -p 8108:8108 \
+  -v /tmp/typesense-data:/data \
+  typesense/typesense:26.0 \
+  --data-dir /data \
+  --api-key=admin-api-key \
+  --enable-cors
+```
+
+| Flag | Purpose |
+|---|---|
+| `-d` | Run container in the background |
+| `-p 8108:8108` | Expose Typesense on `localhost:8108` |
+| `-v /tmp/typesense-data:/data` | Persist data across container restarts |
+| `--api-key` | Sets the admin API key — change this to something secure |
+| `--enable-cors` | Required for frontend to query Typesense directly from the browser |
+
+Typesense is now running at `http://localhost:8108`.
+
+**Step 2 — Generate a search-only key for the frontend**
+
+The frontend must never use the admin key. Run this to generate a scoped search-only key:
+
+```bash
+curl "http://localhost:8108/keys" \
+  -X POST \
+  -H "X-TYPESENSE-API-KEY: admin-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "description": "Search-only key for frontend",
+    "actions": ["documents:search"],
+    "collections": ["*"]
+  }'
+```
+
+The response will include a `value` field — copy that and use it as `TYPESENSE_API_KEY` in your frontend `.env`.
+
+> Replace `admin-api-key` in the curl command with whatever you set in Step 1.
+
+**Step 3 — Update your backend `.env`**
+
+```env
+TYPESENSE_HOST=127.0.0.1
+TYPESENSE_PORT=8108
+TYPESENSE_PROTOCOL=http
+TYPESENSE_API_KEY=admin-api-key
+```
+
+**Step 4 — Index existing records**
+
+```bash
+php artisan scout:import "App\Models\Protocol"
+php artisan scout:import "App\Models\Thread"
+```
+
+---
 
 ### Manual Indexing
 
