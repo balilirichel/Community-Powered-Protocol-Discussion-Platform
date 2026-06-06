@@ -57,7 +57,7 @@ export function useMutation<TData, TVariables = void>(
       setIsLoading(true);
       setError(null);
 
-      // ─── Optimistic update ──────────────────────────────────────────
+      // ****Optimistic update ──────────────────────────────────────────
       let rollbackData: TData | undefined;
       if (optionsRef.current.onMutate) {
         rollbackData = optionsRef.current.onMutate(variables);

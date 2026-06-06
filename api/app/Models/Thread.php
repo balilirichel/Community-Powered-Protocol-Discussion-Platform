@@ -69,6 +69,8 @@ class Thread extends Model
             'id'             => (string) $this->id,
             'title'          => (string) $this->title,
             'body'           => (string) $this->body,
+            'user_id'        => (string) $this->user_id,
+            'protocol_id'    => (string) $this->protocol_id,
             'votes'          => (int) ($this->votes_sum_value ?? $this->votes()->sum('value')),
             'comments_count' => (int) ($this->comments_count ?? $this->comments()->count()),
             'created_at'     => $this->created_at ? $this->created_at->timestamp : 0,

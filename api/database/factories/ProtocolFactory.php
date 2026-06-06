@@ -24,7 +24,7 @@ class ProtocolFactory extends Factory
             'title'   => $this->faker->unique()->sentence(5),
             'content' => $this->faker->paragraphs(4, true),
             'tags'    => $this->faker->randomElements($tagPool, rand(2, 5)),
-            'rating'  => $this->faker->randomFloat(2, 1.00, 5.00),
+            
         ];
     }
 }

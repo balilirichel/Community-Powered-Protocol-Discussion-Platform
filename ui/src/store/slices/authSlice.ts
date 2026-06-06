@@ -15,7 +15,7 @@ const initialState: AuthState = {
   // Rehydrate token from localStorage on cold start
   token: localStorage.getItem(TOKEN_KEY),
   isAuthenticated: !!localStorage.getItem(TOKEN_KEY),
-  isLoadingUser: false,
+  isLoadingUser: !!localStorage.getItem(TOKEN_KEY),
 };
 
 const authSlice = createSlice({

@@ -51,8 +51,7 @@ export function useAuth() {
       const currentUser = await authService.getUser();
       dispatch(setUser(currentUser));
     } catch (error) {
-      // 401 is handled by the Axios interceptor (clears auth)
-      // Re-throw so callers can handle it if needed
+
       throw error as ApiError;
     } finally {
       dispatch(setLoadingUser(false));

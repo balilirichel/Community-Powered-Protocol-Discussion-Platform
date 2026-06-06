@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreReviewRequest;
@@ -59,9 +59,6 @@ class ReviewController extends Controller
             'feedback' => $request->input('feedback'),
         ]);
 
-        // Recalculate and update the protocol's aggregate rating
-        $this->syncProtocolRating($protocol);
-
         $review->load(['user', 'protocol']);
 
         return new ReviewResource($review);
@@ -89,9 +86,6 @@ class ReviewController extends Controller
 
         $review->update($request->validated());
 
-        // Recalculate and update the protocol's aggregate rating
-        $this->syncProtocolRating($protocol);
-
         $review->load(['user', 'protocol']);
 
         return new ReviewResource($review);
@@ -107,23 +101,9 @@ class ReviewController extends Controller
 
         $review->delete();
 
-        // Recalculate and update the protocol's aggregate rating
-        $this->syncProtocolRating($protocol);
-
         return response()->json([
             'message' => 'Review deleted successfully.',
         ], 200);
-    }
-
-    /**
-     * Recalculate the protocol's average rating from all its reviews
-     * and persist it to the protocols table.
-     */
-    private function syncProtocolRating(Protocol $protocol): void
-    {
-        $average = $protocol->reviews()->avg('rating') ?? 0.00;
-
-        $protocol->update(['rating' => round($average, 2)]);
     }
 
     /**

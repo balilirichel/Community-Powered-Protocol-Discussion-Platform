@@ -13,6 +13,7 @@ use App\Models\Review;
 use App\Policies\ReviewPolicy;
 use App\Models\Comment;
 use App\Policies\CommentPolicy;
+use App\Observers\ReviewObserver;
 
 
 class AppServiceProvider extends ServiceProvider
@@ -40,5 +41,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Thread::class, ThreadPolicy::class);
         Gate::policy(Comment::class, CommentPolicy::class);
         Gate::policy(Review::class, ReviewPolicy::class);
+
+        // Automatically sync protocol rating when reviews are created/updated/deleted
+        Review::observe(ReviewObserver::class);
     }
 }

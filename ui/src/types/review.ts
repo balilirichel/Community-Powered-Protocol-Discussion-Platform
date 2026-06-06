@@ -1,19 +1,31 @@
+export interface ReviewAuthor {
+  id: number;
+  name: string;
+}
+
+export interface ReviewProtocol {
+  id: number;
+  title: string;
+}
+
 export interface Review {
   id: number;
-  body: string;
   rating: number;
-  protocol_id: number;
-  user_id: number;
+  feedback: string;
+
+  author: ReviewAuthor;
+  protocol: ReviewProtocol;
+
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateReviewRequest {
-  body: string;
   rating: number;
+  feedback: string;
 }
 
 export interface UpdateReviewRequest {
-  body?: string;
   rating?: number;
+  feedback?: string;
 }

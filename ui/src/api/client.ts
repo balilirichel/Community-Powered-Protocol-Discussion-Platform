@@ -1,7 +1,8 @@
-import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError } from 'axios';
+import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { store } from '../store';
 import { clearAuth } from '../store/slices/authSlice';
-import { setGlobalError } from '../store/slices/uiSlice';
+import { setGlobalError } from '../store/slices/uiSlice.ts';
 import type { ApiError } from '../types/api';
 
 const apiClient: AxiosInstance = axios.create({
@@ -13,7 +14,7 @@ const apiClient: AxiosInstance = axios.create({
   withCredentials: false,
 });
 
-// ─── Request interceptor: inject Bearer token ───────────────────────────────
+// ****Request interceptor: inject Bearer token ───────────────────────────────
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = store.getState().auth.token;
@@ -25,7 +26,7 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// ─── Response interceptor: normalize errors ──────────────────────────────────
+// ****Response interceptor: normalize errors ──────────────────────────────────
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<{ message?: string; errors?: Record<string, string[]> }>) => {

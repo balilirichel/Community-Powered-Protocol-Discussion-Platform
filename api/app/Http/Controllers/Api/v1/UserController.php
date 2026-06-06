@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -11,7 +11,11 @@ use Illuminate\Validation\ValidationException;
 use App\Http\Requests\StoreAuthRequest;
 
 class UserController extends Controller
-{
+{   
+    public function index(Request $request)
+    {
+        return $request->user()->loadCount(['protocols', 'threads', 'reviews']);
+    }
     /**
      * Handle user registration.
      *

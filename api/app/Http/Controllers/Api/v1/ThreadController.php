@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreThreadRequest;
@@ -45,14 +45,14 @@ class ThreadController extends Controller
      * POST /api/protocols/{protocol}/threads
      */
     public function store(StoreThreadRequest $request, Protocol $protocol): ThreadResource
-    {
+    {   
+      
         $thread = $protocol->threads()->create([
             ...$request->validated(),
             'user_id' => Auth::id(),
         ]);
-
         $thread->load(['user', 'protocol']);
-
+        
         return new ThreadResource($thread);
     }
 

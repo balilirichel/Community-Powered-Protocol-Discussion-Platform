@@ -1,11 +1,23 @@
+export interface ThreadProtocol {
+  id: number;
+  title: string;
+}
+
+export interface ThreadAuthor {
+  id: number;
+  name: string;
+}
+
 export interface Thread {
   id: number;
   title: string;
   body: string;
-  protocol_id: number;
-  user_id: number;
-  votes_count: number;
-  user_vote: number | null; // 1 = upvote, -1 = downvote, null = no vote
+  protocol: ThreadProtocol;
+  author: ThreadAuthor;
+  user:ThreadAuthor;
+  comments_count?: number;
+  upvotes_count?: number;
+  downvotes_count?: number;
   created_at: string;
   updated_at: string;
 }

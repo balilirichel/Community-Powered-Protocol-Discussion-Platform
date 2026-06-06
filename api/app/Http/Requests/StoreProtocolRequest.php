@@ -27,7 +27,7 @@ class StoreProtocolRequest extends FormRequest
             'content' => ['required', 'string'],
             'tags'    => ['nullable', 'array'],
             'tags.*'  => ['string', 'max:50'],
-            'rating'  => ['nullable', 'numeric', 'min:0', 'max:5'],
+         //   'rating'  => ['nullable', 'numeric', 'min:0', 'max:5'],
         ];
     }
 }

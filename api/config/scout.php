@@ -191,6 +191,7 @@ return [
                 'collection-schema' => [
                     'fields' => [
                         ['name' => 'id',            'type' => 'string'],
+                        ['name' => 'user_id',         'type' => 'string'],
                         ['name' => 'title',         'type' => 'string'],
                         ['name' => 'tags',          'type' => 'string[]', 'optional' => true],
                         ['name' => 'votes',         'type' => 'int32'],
@@ -220,6 +221,8 @@ return [
                 'collection-schema' => [
                     'fields' => [
                         ['name' => 'id',             'type' => 'string'],
+                        ['name' => 'protocol_id',    'type' => 'string'],
+                        ['name' => 'user_id',         'type' => 'string'],
                         ['name' => 'title',          'type' => 'string'],
                         ['name' => 'body',           'type' => 'string'],
                         ['name' => 'votes',          'type' => 'int32'],

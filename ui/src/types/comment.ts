@@ -1,16 +1,29 @@
+export interface CommentAuthor {
+  id: number;
+  name: string;
+}
+
 export interface Comment {
   id: number;
   body: string;
+
+  parent_id: number | null;
   thread_id: number;
-  user_id: number;
-  votes_count: number;
-  user_vote: number | null; // 1 = upvote, -1 = downvote, null = no vote
+
+  author: CommentAuthor;
+
+  upvotes_count?: number;
+  downvotes_count?: number;
+
+  replies?: Comment[];
+
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateCommentRequest {
   body: string;
+  parent_id?: number | null;
 }
 
 export interface UpdateCommentRequest {

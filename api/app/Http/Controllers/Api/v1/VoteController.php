@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\VoteRequest;
@@ -10,7 +10,7 @@ use App\Models\Thread;
 use App\Models\Vote;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Http\Request;
 class VoteController extends Controller
 {
     /**
@@ -20,18 +20,18 @@ class VoteController extends Controller
      * - If the user votes the same value again: remove the vote (toggle off).
      * - If the user votes a different value: update the existing vote.
      */
-    public function voteThread(VoteRequest $request, Thread $thread): VoteResource|JsonResponse
+    public function voteThread(Request $request, Thread $thread): VoteResource|JsonResponse
     {
-        return $this->handleVote($request->input('value'), $thread);
+        return $this->handleVote($request->input('vote'), $thread);
     }
 
     /**
      * POST /api/comments/{comment}/vote
      * Upvote or downvote a comment.
      */
-    public function voteComment(VoteRequest $request, Comment $comment): VoteResource|JsonResponse
+    public function voteComment(Request $request, Comment $comment): VoteResource|JsonResponse
     {
-        return $this->handleVote($request->input('value'), $comment);
+        return $this->handleVote($request->input('vote'), $comment);
     }
 
     /**

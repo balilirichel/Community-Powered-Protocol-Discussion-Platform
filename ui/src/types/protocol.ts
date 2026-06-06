@@ -1,23 +1,33 @@
 export interface Protocol {
   id: number;
   title: string;
-  description: string;
-  slug: string;
-  user_id: number;
+  content: string;
+  tags: string[];
+  rating: number | null;
+
+  author: {
+    id: number;
+    name: string;
+  };
+
+  threads_count?: number;
+  reviews_count?: number;
+
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateProtocolRequest {
   title: string;
-  description: string;
+  content: string;
+  tags?: string[];
 }
 
 export interface UpdateProtocolRequest {
   title?: string;
-  description?: string;
+  content?: string;
+  tags?: string[];
 }
-
 export interface PaginatedResponse<T> {
   data: T[];
   meta: {

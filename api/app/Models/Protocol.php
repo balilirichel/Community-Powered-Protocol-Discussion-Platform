@@ -74,6 +74,7 @@ class Protocol extends Model
         return [
             'id'            => (string) $this->id,
             'title'         => (string) $this->title,
+            'user_id'       => (string) $this->user_id,
             'tags'          => $this->tags ?? [],
             'votes'         => (int) ($this->votes_sum_value ?? $this->votes()->sum('value')),
             'rating'        => (float) $this->rating,
