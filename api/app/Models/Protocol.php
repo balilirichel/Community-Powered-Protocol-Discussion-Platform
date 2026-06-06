@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Laravel\Scout\Searchable;
 
 class Protocol extends Model
 {
-    use HasFactory;
+    use HasFactory, Searchable;
 
     protected $fillable = [
         'user_id',
@@ -46,5 +48,48 @@ class Protocol extends Model
     public function votes(): MorphMany
     {
         return $this->morphMany(Vote::class, 'voteable');
+    }
+
+    // -------------------------------------------------------------------------
+    // Scout / Typesense
+    // -------------------------------------------------------------------------
+
+    /**
+     * The Typesense collection (index) name for this model.
+     */
+    public function searchableAs(): string
+    {
+        return 'protocols';
+    }
+
+    /**
+     * Fields indexed into Typesense.
+     *
+     * votes  = SUM of votes.value (1 upvote / -1 downvote)
+     * rating = stored decimal on protocols table
+     * tags   = JSON array column — confirmed present in migration
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'id'            => (string) $this->id,
+            'title'         => (string) $this->title,
+            'tags'          => $this->tags ?? [],
+            'votes'         => (int) ($this->votes_sum_value ?? $this->votes()->sum('value')),
+            'rating'        => (float) $this->rating,
+            'reviews_count' => (int) ($this->reviews_count ?? $this->reviews()->count()),
+            'created_at'    => $this->created_at ? $this->created_at->timestamp : 0,
+        ];
+    }
+
+    /**
+     * Eager-load aggregates when bulk-importing via `scout:import` or
+     * the reindex command so we avoid N+1 queries.
+     */
+    protected function makeAllSearchableUsing(Builder $query): Builder
+    {
+        return $query
+            ->withSum('votes', 'value')
+            ->withCount('reviews');
     }
 }

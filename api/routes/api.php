@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ThreadController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\VoteController;
+use App\Http\Controllers\Api\SearchController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -78,5 +79,22 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('comments/{comment}/vote',  [VoteController::class, 'voteComment']);
     Route::delete('comments/{comment}/vote',[VoteController::class, 'unvoteComment']);
+
+    // -------------------------------------------------------------------------
+    // Typesense search routes  (auth: sanctum — authenticated users only)
+    // -------------------------------------------------------------------------
+    Route::prefix('search')->group(function () {
+        // Search-as-you-type endpoints
+        // GET /api/search/protocols?q=...&filter=recent|reviewed|rated|upvoted
+        Route::get('protocols', [SearchController::class, 'protocols']);
+
+        // GET /api/search/threads?q=...&filter=recent|reviewed|upvoted
+        // Note: 'rated' filter falls back to 'upvoted' for threads (no rating field)
+        Route::get('threads', [SearchController::class, 'threads']);
+
+        // Reindex trigger — flushes and reimports into Typesense
+        // POST /api/search/reindex   body: { model: "Protocol"|"Thread" } (optional)
+        Route::post('reindex', [SearchController::class, 'reindex']);
+    });
    
 });

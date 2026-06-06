@@ -181,28 +181,62 @@ return [
         ],
         // 'max_total_results' => env('TYPESENSE_MAX_TOTAL_RESULTS', 1000),
         'model-settings' => [
-            // User::class => [
-            //     'collection-schema' => [
-            //         'fields' => [
-            //             [
-            //                 'name' => 'id',
-            //                 'type' => 'string',
-            //             ],
-            //             [
-            //                 'name' => 'name',
-            //                 'type' => 'string',
-            //             ],
-            //             [
-            //                 'name' => 'created_at',
-            //                 'type' => 'int64',
-            //             ],
-            //         ],
-            //         'default_sorting_field' => 'created_at',
-            //     ],
-            //     'search-parameters' => [
-            //         'query_by' => 'name'
-            //     ],
-            // ],
+
+            // -----------------------------------------------------------------
+            // Protocol collection
+            // Fields: title, tags, votes (sum), rating, reviews_count, created_at
+            // tags is a JSON array column — confirmed present in protocols migration.
+            // -----------------------------------------------------------------
+            \App\Models\Protocol::class => [
+                'collection-schema' => [
+                    'fields' => [
+                        ['name' => 'id',            'type' => 'string'],
+                        ['name' => 'title',         'type' => 'string'],
+                        ['name' => 'tags',          'type' => 'string[]', 'optional' => true],
+                        ['name' => 'votes',         'type' => 'int32'],
+                        ['name' => 'rating',        'type' => 'float'],
+                        ['name' => 'reviews_count', 'type' => 'int32'],
+                        ['name' => 'created_at',    'type' => 'int64'],
+                    ],
+                    'default_sorting_field' => 'created_at',
+                ],
+                'search-parameters' => [
+                    // query_by drives search-as-you-type on title (and tags as secondary)
+                    'query_by'             => 'title,tags',
+                    'query_by_weights'     => '3,1',
+                    'num_typos'            => '1',
+                    'prefix'               => 'true',
+                ],
+            ],
+
+            // -----------------------------------------------------------------
+            // Thread collection
+            // Fields: title, body, votes (sum), comments_count, created_at
+            // NOTE: 'tags' is intentionally EXCLUDED from Thread.
+            //       The threads migration has no tags column. Including it
+            //       would cause a Typesense schema mismatch error.
+            // -----------------------------------------------------------------
+            \App\Models\Thread::class => [
+                'collection-schema' => [
+                    'fields' => [
+                        ['name' => 'id',             'type' => 'string'],
+                        ['name' => 'title',          'type' => 'string'],
+                        ['name' => 'body',           'type' => 'string'],
+                        ['name' => 'votes',          'type' => 'int32'],
+                        ['name' => 'comments_count', 'type' => 'int32'],
+                        ['name' => 'created_at',     'type' => 'int64'],
+                    ],
+                    'default_sorting_field' => 'created_at',
+                ],
+                'search-parameters' => [
+                    // search-as-you-type on title; body as secondary fulltext field
+                    'query_by'             => 'title,body',
+                    'query_by_weights'     => '3,1',
+                    'num_typos'            => '1',
+                    'prefix'               => 'true',
+                ],
+            ],
+
         ],
         'import_action' => env('TYPESENSE_IMPORT_ACTION', 'upsert'),
     ],
