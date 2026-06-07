@@ -1,28 +1,20 @@
-FROM php:8.4-fpm
+FROM richarvey/nginx-php-fpm:3.1.6
 
-RUN apt-get update && apt-get install -y \
-    git curl zip unzip libpng-dev libonig-dev libxml2-dev libzip-dev libicu-dev \
-    && docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring zip exif pcntl gd intl \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+COPY . .
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Image config
+ENV SKIP_COMPOSER 1
+ENV WEBROOT /var/www/html/public
+ENV PHP_ERRORS_STDERR 1
+ENV RUN_SCRIPTS 1
+ENV REAL_IP_HEADER 1
 
-WORKDIR /app
+# Laravel config
+ENV APP_ENV production
+ENV APP_DEBUG false
+ENV LOG_CHANNEL stderr
 
-COPY composer.json composer.lock /app/
+# Allow composer to run as root
+ENV COMPOSER_ALLOW_SUPERUSER 1
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
-
-COPY . /app
-
-RUN composer dump-autoload --optimize
-
-RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
-
-RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
-
-EXPOSE 8000
-
-CMD ["/bin/sh", "-c", "php artisan migrate --force && php artisan db:seed --force && php artisan typesense:reindex && php artisan serve --host=0.0.0.0 --port=8000"]
+CMD ["/start.sh"]
