@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Heading } from 'lucide-react';
 import { protocolService } from '../../../api/protocolService';
-import type { Protocol, CreateProtocolRequest } from '../../../types/protocol';
+import type { Protocol } from '../../../types/protocol';
 import type { ApiError } from '../../../types/api';
 import ProtocolTagsInput from './ProtocolTagsInput';
 import ProtocolContentEditor from './ProtocolContentEditor';
