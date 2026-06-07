@@ -11,6 +11,9 @@ RUN install-php-extensions \
     bcmath \
     opcache
 
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
 # Set working directory
 WORKDIR /app
 
@@ -18,8 +21,7 @@ WORKDIR /app
 COPY . /app
 
 # Install Composer dependencies securely for production
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-    && composer install --no-dev --optimize-autoloader --no-interaction
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Set correct storage permissions for Laravel
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
