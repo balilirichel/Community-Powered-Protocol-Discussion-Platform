@@ -9,7 +9,9 @@ RUN install-php-extensions \
     openssl \
     zip \
     bcmath \
-    opcache
+    opcache \
+    intl \
+    curl
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -17,11 +19,17 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /app
 
-# Copy application files
+# Copy composer files first
+COPY composer.json composer.lock /app/
+
+# Install dependencies
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+
+# Copy rest of application files
 COPY . /app
 
-# Install Composer dependencies securely for production
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Run composer scripts now that full app is present
+RUN composer dump-autoload --optimize
 
 # Set correct storage permissions for Laravel
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
