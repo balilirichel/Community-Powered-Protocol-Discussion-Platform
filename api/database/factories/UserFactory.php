@@ -22,11 +22,8 @@ class UserFactory extends Factory
      *
      * @return array<string, mixed>
      */
-    
     public function definition(): array
     {
-        $faker = \Faker\Factory::create();
-        
         return [
             'name' => $this->faker->name(),
             'email' => $this->faker->unique()->safeEmail(),
