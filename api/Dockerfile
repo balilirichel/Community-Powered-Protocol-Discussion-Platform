@@ -1,19 +1,10 @@
-FROM dunglas/frankenphp:1-php8.4-alpine
+FROM php:8.4-fpm
 
-# Install system extensions required for Laravel & MySQL
-RUN install-php-extensions \
-    pdo_pgsql \
-    pdo_mysql \
-    mbstring \
-    xml \
-    openssl \
-    zip \
-    bcmath \
-    opcache \
-    intl \
-    curl
+RUN apt-get update && apt-get install -y \
+    git curl zip unzip libpng-dev libonig-dev libxml2-dev libzip-dev libicu-dev \
+    && docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring zip exif pcntl gd intl \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
@@ -32,7 +23,6 @@ RUN php artisan config:cache \
     && php artisan route:cache \
     && php artisan view:cache
 
-EXPOSE 80
+EXPOSE 8000
 
-# Run migrations then hand off to default FrankenPHP entrypoint
-CMD ["/bin/sh", "-c", "php artisan migrate --force && php artisan db:seed --force && php artisan typesense:reindex && frankenphp run --config /etc/caddy/Caddyfile"]
+CMD ["/bin/sh", "-c", "php artisan migrate --force && php artisan db:seed --force && php artisan typesense:reindex && php artisan serve --host=0.0.0.0 --port=8000"]
