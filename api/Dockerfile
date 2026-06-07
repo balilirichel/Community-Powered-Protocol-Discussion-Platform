@@ -2,6 +2,9 @@ FROM richarvey/nginx-php-fpm:3.1.6
 
 COPY . .
 
+# Run composer install directly in build
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+
 # Image config
 ENV SKIP_COMPOSER 1
 ENV WEBROOT /var/www/html/public
@@ -16,8 +19,5 @@ ENV LOG_CHANNEL stderr
 
 # Allow composer to run as root
 ENV COMPOSER_ALLOW_SUPERUSER 1
-
-ENV SKIP_COMPOSER 1
-ENV RUN_SCRIPTS 1
 
 CMD ["/start.sh"]
