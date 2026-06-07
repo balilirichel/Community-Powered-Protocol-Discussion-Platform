@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useAppDispatch } from '../store/hooks';
 import { authService } from '../api/authService';
 import { setCredentials } from '../store/slices/authSlice';
@@ -17,6 +18,26 @@ export default function LoginPage() {
     const dispatch = useAppDispatch();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const getFriendlyLoginError = (error: unknown) => {
+        if (!error || typeof error !== 'object') {
+            return 'Unable to sign in right now. Please try again shortly.';
+        }
+
+        const apiError = error as { message?: string; status?: number };
+        const message = apiError.message ?? '';
+
+        if (apiError.status === 422) {
+            return 'Please check your email and password and try again.';
+        }
+
+        const normalizedMessage = message.toLowerCase();
+        if (normalizedMessage.includes('credentials') || normalizedMessage.includes('invalid')) {
+            return 'Email or password is incorrect. Please try again.';
+        }
+
+        return 'Unable to sign in right now. Please try again shortly.';
+    };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -28,11 +49,12 @@ export default function LoginPage() {
 
             // resp.data contains { user, token }
             dispatch(setCredentials({ user: resp.data.user, token: resp.data.token }));
+            toast.success('Signed in successfully. Welcome back!');
 
             // Redirect to home after successful login
             navigate('/');
         } catch (err) {
-
+            toast.error(getFriendlyLoginError(err));
             console.error('Login failed', err);
         } finally {
             setIsSubmitting(false);

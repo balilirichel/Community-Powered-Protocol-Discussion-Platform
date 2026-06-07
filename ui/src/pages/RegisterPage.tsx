@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { toast } from 'react-toastify';
 import CardBanner from "../components/ui/CardBanner";
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../api/authService';
@@ -15,6 +16,28 @@ export default function RegisterPage() {
     const dispatch = useAppDispatch();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const getFriendlyRegisterError = (error: unknown) => {
+        if (!error || typeof error !== 'object') {
+            return 'Unable to create your account right now. Please try again shortly.';
+        }
+
+        const apiError = error as { message?: string; status?: number };
+        const message = apiError.message ?? '';
+
+        if (apiError.status === 422) {
+            if (message.toLowerCase().includes('email')) {
+                return 'This email is already in use. Try signing in or use another email.';
+            }
+            return 'Please check your information and try again.';
+        }
+
+        if (message.toLowerCase().includes('already')) {
+            return 'This email is already in use. Try signing in or use another email.';
+        }
+
+        return 'Unable to create your account right now. Please try again shortly.';
+    };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -27,12 +50,13 @@ export default function RegisterPage() {
 
             // resp.data contains { user, token }
             dispatch(setCredentials({ user: resp.data.user, token: resp.data.token }));
+            toast.success('Your account is ready. Welcome aboard!');
 
             // Redirect to protocol after successful register
             navigate('/');
         } catch (err) {
-
-            console.error('Login failed', err);
+            toast.error(getFriendlyRegisterError(err));
+            console.error('Registration failed', err);
         } finally {
             setIsSubmitting(false);
         }

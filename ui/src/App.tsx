@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
 import HomePage from './pages/HomePage';
 import ProtocolDetailPage from './pages/ProtocolDetailPage';
 import CreateProtocolPage from './pages/CreateProtocolPage';
@@ -102,6 +103,15 @@ function App() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        theme="colored"
+      />
     </BrowserRouter>
   );
 }
