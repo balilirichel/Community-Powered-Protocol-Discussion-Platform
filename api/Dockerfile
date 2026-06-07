@@ -35,4 +35,4 @@ RUN php artisan config:cache \
 EXPOSE 80
 
 # Run migrations then hand off to default FrankenPHP entrypoint
-CMD ["sh", "-c", "php artisan migrate --force && php artisan db:seed --force && php artisan typesense:reindex && frankenphp run --config /etc/caddy/Caddyfile"]
+CMD ["/bin/sh", "-c", "php artisan migrate --force && php artisan db:seed --force && php artisan typesense:reindex && frankenphp run --config /etc/caddy/Caddyfile"]
