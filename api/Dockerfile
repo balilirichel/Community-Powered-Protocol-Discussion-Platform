@@ -20,16 +20,11 @@ COPY . .
 
 RUN composer dump-autoload --optimize
 
-# Copy nginx config
 RUN rm /etc/nginx/sites-enabled/default
 COPY conf/nginx/nginx-site.conf /etc/nginx/sites-enabled/default
 
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
-
 EXPOSE 80
 
-CMD ["/bin/sh", "-c", "php artisan migrate --force && php-fpm -D && nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "php artisan key:generate --force && php artisan migrate --force && php-fpm -D && nginx -g 'daemon off;'"]
