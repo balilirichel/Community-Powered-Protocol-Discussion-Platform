@@ -193,6 +193,7 @@ return [
                         ['name' => 'id',            'type' => 'string'],
                         ['name' => 'user_id',         'type' => 'string'],
                         ['name' => 'title',         'type' => 'string'],
+                        ['name' => 'content',         'type' => 'string'],
                         ['name' => 'tags',          'type' => 'string[]', 'optional' => true],
                         ['name' => 'votes',         'type' => 'int32'],
                         ['name' => 'rating',        'type' => 'float'],
@@ -203,8 +204,8 @@ return [
                 ],
                 'search-parameters' => [
                     // query_by drives search-as-you-type on title (and tags as secondary)
-                    'query_by'             => 'title,tags',
-                    'query_by_weights'     => '3,1',
+                    'query_by'             => 'title,tags,content',
+                    'query_by_weights'     => '3,1,1',
                     'num_typos'            => '1',
                     'prefix'               => 'true',
                 ],
@@ -233,8 +234,8 @@ return [
                 ],
                 'search-parameters' => [
                     // search-as-you-type on title; body as secondary fulltext field
-                    'query_by'             => 'title,body',
-                    'query_by_weights'     => '3,1',
+                    'query_by'             => 'title,body,content',
+                    'query_by_weights'     => '3,1,1',
                     'num_typos'            => '1',
                     'prefix'               => 'true',
                 ],
