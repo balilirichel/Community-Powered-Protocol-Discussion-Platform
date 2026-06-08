@@ -27,4 +27,4 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 
 EXPOSE 80
 
-CMD ["/bin/sh", "-c", "php artisan migrate --force && php-fpm -D && nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "php artisan migrate --force && php artisan db:seed --force && php artisan typesense:reindex && php-fpm -D && nginx -g 'daemon off;'"]
