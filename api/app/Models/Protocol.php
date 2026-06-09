@@ -96,4 +96,10 @@ class Protocol extends Model
             ->withSum('votes', 'value')
             ->withCount('reviews');
     }
+
+    public function recalculateRating(): void
+    {
+        $avg = $this->reviews()->avg('rating') ?? 0;
+        $this->updateQuietly(['rating' => round($avg, 2)]);
+    }
 }

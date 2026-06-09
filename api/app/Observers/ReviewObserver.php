@@ -7,57 +7,36 @@ use App\Models\Review;
 class ReviewObserver
 {
     /**
-     * Handle the Review "created" event.
+     * Recalculate protocol rating when a review is created.
      */
     public function created(Review $review): void
     {
-        $this->syncProtocolRating($review);
+        $review->protocol->recalculateRating();
     }
 
     /**
-     * Handle the Review "updated" event.
+     * Recalculate when a review rating is updated.
      */
     public function updated(Review $review): void
     {
-        $this->syncProtocolRating($review);
+        if ($review->wasChanged('rating')) {
+            $review->protocol->recalculateRating();
+        }
     }
 
     /**
-     * Handle the Review "deleted" event.
+     * Recalculate when a review is deleted.
      */
     public function deleted(Review $review): void
     {
-        $this->syncProtocolRating($review);
+        $review->protocol->recalculateRating();
     }
 
     /**
-     * Handle the Review "restored" event.
-     */
-    public function restored(Review $review): void
-    {
-        $this->syncProtocolRating($review);
-    }
-
-    /**
-     * Handle the Review "force deleted" event.
+     * Handle force-delete (if soft deletes are added later).
      */
     public function forceDeleted(Review $review): void
     {
-        $this->syncProtocolRating($review);
-    }
-
-    /**
-     * Recalculate the protocol's average rating from all its reviews.
-     */
-    private function syncProtocolRating(Review $review): void
-    {
-        if (!$review->protocol) {
-            $review->load('protocol');
-        }
-
-        $protocol = $review->protocol;
-        $average = $protocol->reviews()->avg('rating') ?? 0.00;
-
-        $protocol->update(['rating' => round($average, 2)]);
+        $review->protocol->recalculateRating();
     }
 }

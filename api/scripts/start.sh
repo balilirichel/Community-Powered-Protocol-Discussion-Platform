@@ -12,6 +12,9 @@ nginx -g 'daemon off;' &
 # echo "Seeding database..."
 # php artisan db:seed --force
 
+echo "Fixing protocol ratings..."
+php php artisan protocols:recalculate-ratings
+
 echo "Indexing Typesense..."
 php artisan scout:import 'App\Models\Protocol'
 php artisan scout:import 'App\Models\Thread'
