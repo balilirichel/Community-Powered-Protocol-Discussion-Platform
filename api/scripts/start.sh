@@ -9,8 +9,8 @@ php-fpm -D
 echo "Starting Nginx..."
 nginx -g 'daemon off;' &
 
-echo "Seeding database..."
-php artisan db:seed --force
+# echo "Seeding database..."
+# php artisan db:seed --force
 
 echo "Indexing Typesense..."
 php artisan scout:import 'App\Models\Protocol'
