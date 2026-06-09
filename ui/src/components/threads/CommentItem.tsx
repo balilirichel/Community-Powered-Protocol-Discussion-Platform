@@ -47,7 +47,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
   onCommentUpdated,
   onCommentDeleted,
 }) => {
-  const [showDeepReplies, setShowDeepReplies] = useState(false);
+  // const [showDeepReplies, setShowDeepReplies] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(comment.body);
@@ -56,7 +56,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
 
   const maxDepth = isDesktop ? maxDesktopDepth : maxMobileDepth;
   const hasReplies = (comment.replies?.length ?? 0) > 0;
-  const isAtDepthLimit = level >= maxDepth - 1;
+  // const isAtDepthLimit = level >= maxDepth - 1;
 
   const upvotes = comment.upvotes_count ?? 0;
   const authorName = comment.author?.name ?? 'Unknown';
@@ -272,31 +272,20 @@ const CommentItem: React.FC<CommentItemProps> = ({
       {/* Render nested replies */}
       {hasReplies && (
         <div>
-          {isAtDepthLimit && !showDeepReplies ? (
-            <button
-              onClick={() => setShowDeepReplies(true)}
-              className="flex items-center gap-1.5 text-xs font-semibold text-[#118451] hover:text-[#065c38] cursor-pointer py-1.5 mb-2 ml-2"
-            >
-              <ChevronDown size={13} />
-              {comment.replies!.length} more{' '}
-              {comment.replies!.length === 1 ? 'reply' : 'replies'}
-            </button>
-          ) : (
-            comment.replies!.map((reply) => (
-              <CommentItem
-                key={reply.id}
-                comment={reply}
-                level={level + 1}
-                maxMobileDepth={maxMobileDepth}
-                maxDesktopDepth={maxDesktopDepth}
-                isDesktop={isDesktop}
-                currentUserId={currentUserId}
-                onReply={onReply}
-                onCommentUpdated={onCommentUpdated}
-                onCommentDeleted={onCommentDeleted}
-              />
-            ))
-          )}
+          {comment.replies!.map((reply) => (
+            <CommentItem
+              key={reply.id}
+              comment={reply}
+              level={level + 1}
+              maxMobileDepth={maxMobileDepth}
+              maxDesktopDepth={maxDesktopDepth}
+              isDesktop={isDesktop}
+              currentUserId={currentUserId}
+              onReply={onReply}
+              onCommentUpdated={onCommentUpdated}
+              onCommentDeleted={onCommentDeleted}
+            />
+          ))}
         </div>
       )}
     </div>

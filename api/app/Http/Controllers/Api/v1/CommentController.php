@@ -24,28 +24,18 @@ class CommentController extends Controller
     public function index(Request $request, Thread $thread): AnonymousResourceCollection
     {
         $comments = $thread->comments()
-            ->with([
-                'user',
-                'replies' => function ($query) {
-                    $query->with('user')
-                          ->withCount([
-                              'votes as upvotes_count'   => fn($q) => $q->where('value', 1),
-                              'votes as downvotes_count' => fn($q) => $q->where('value', -1),
-                          ]);
-                },
-            ])
+            ->with($this->buildNestedWith())
             ->withCount([
                 'votes as upvotes_count'   => fn($q) => $q->where('value', 1),
                 'votes as downvotes_count' => fn($q) => $q->where('value', -1),
             ])
-            ->whereNull('parent_id') // top-level only; replies are nested inside
+            ->whereNull('parent_id')
             ->orderBy('created_at')
             ->paginate(20);
 
         return CommentResource::collection($comments);
     }
-
-    /**
+        /**
      * POST /api/threads/{thread}/comments
      * Creates a top-level comment or a reply (when parent_id is provided).
      */
@@ -78,19 +68,11 @@ class CommentController extends Controller
     {
         $this->ensureBelongsToThread($thread, $comment);
 
-        $comment->load([
-            'user',
-            'replies' => function ($query) {
-                $query->with('user')
-                      ->withCount([
-                          'votes as upvotes_count'   => fn($q) => $q->where('value', 1),
-                          'votes as downvotes_count' => fn($q) => $q->where('value', -1),
-                      ]);
-            },
-        ])->loadCount([
-            'votes as upvotes_count'   => fn($q) => $q->where('value', 1),
-            'votes as downvotes_count' => fn($q) => $q->where('value', -1),
-        ]);
+        $comment->load($this->buildNestedWith())
+                ->loadCount([
+                    'votes as upvotes_count'   => fn($q) => $q->where('value', 1),
+                    'votes as downvotes_count' => fn($q) => $q->where('value', -1),
+                ]);
 
         return new CommentResource($comment);
     }
@@ -134,5 +116,38 @@ class CommentController extends Controller
         if ($comment->thread_id !== $thread->id) {
             abort(404, 'Comment not found under this thread.');
         }
+    }
+    //
+    private function loadRepliesRecursively(): array
+    {
+        return [
+            'user',
+            'votes as upvotes_count' => fn($q) => $q->where('value', 1),
+            'votes as downvotes_count' => fn($q) => $q->where('value', -1),
+            'replies' => function ($query) {
+                $query->with($this->buildNestedWith())
+                    ->withCount([
+                        'votes as upvotes_count'   => fn($q) => $q->where('value', 1),
+                        'votes as downvotes_count' => fn($q) => $q->where('value', -1),
+                    ]);
+            },
+        ];
+    }
+
+    private function buildNestedWith(int $depth = 5): array
+    {
+        $with = ['user'];
+
+        if ($depth > 0) {
+            $with['replies'] = function ($query) use ($depth) {
+                $query->with($this->buildNestedWith($depth - 1))
+                    ->withCount([
+                        'votes as upvotes_count'   => fn($q) => $q->where('value', 1),
+                        'votes as downvotes_count' => fn($q) => $q->where('value', -1),
+                    ]);
+            };
+        }
+
+        return $with;
     }
 }
