@@ -11,15 +11,23 @@ interface ReviewCardProps {
   onDelete?: () => void;
 }
 
-const formatDate = (value: string) =>
-  new Date(value).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+const formatRelativeDate = (value: string) => {
+  const now = Date.now();
+  const then = new Date(value).getTime();
+  const diffMs = now - then;
+  const diffMins = Math.floor(diffMs / 60_000);
+  const diffHours = Math.floor(diffMs / 3_600_000);
+  const diffDays = Math.floor(diffMs / 86_400_000);
+
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+};
 
 const ReviewCard: React.FC<ReviewCardProps> = ({ review, canManage = false, onEdit, onDelete }) => (
-  <article className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col gap-3 hover:shadow-sm transition-shadow duration-150">
+  <article className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col gap-3 hover:border-[#118451]/30 hover:shadow-sm transition-all duration-150 cursor-default">
     {/* Author row */}
     <div className="flex items-start justify-between gap-3 flex-wrap">
       <div className="flex items-center gap-2.5 min-w-0">
@@ -28,7 +36,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review, canManage = false, onEd
           <p className="text-sm font-semibold text-gray-900 truncate">
             {review.author?.name ?? 'Anonymous'}
           </p>
-          <p className="text-xs text-gray-400">{formatDate(review.created_at)}</p>
+          <p className="text-xs text-gray-400">{formatRelativeDate(review.created_at)}</p>
         </div>
       </div>
 

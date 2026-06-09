@@ -2,125 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Plus } from 'lucide-react';
 import Button from '../ui/Button';
 import StarRating from '../ui/StarRating';
+import CreateReviewForm from './CreateReviewForm';
 import ReviewList from './ReviewList';
 import { useAppSelector } from '../../store/hooks';
 import { reviewService } from '../../api/reviewService';
 import type { Protocol } from '../../types/protocol';
-import type { Review, CreateReviewRequest } from '../../types/review';
+import type { Review } from '../../types/review';
 import type { ApiError } from '../../types/api';
-
-// ****Add Review Modal ***********//***──
-interface AddReviewModalProps {
-  protocol: Protocol;
-  onClose: () => void;
-  onSuccess: (review: Review) => void;
-}
-
-const AddReviewModal: React.FC<AddReviewModalProps> = ({ protocol, onClose, onSuccess }) => {
-  const [rating, setRating] = useState(0);
-  const [feedback, setFeedback] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const handleSubmit = async () => {
-    if (rating === 0 || !feedback.trim() || isSubmitting) return;
-
-    setIsSubmitting(true);
-    setSubmitError(null);
-    try {
-      const payload: CreateReviewRequest = { rating, feedback: feedback.trim() };
-      const created = await reviewService.create(protocol.id, payload);
-      onSuccess(created);
-      onClose();
-    } catch (err) {
-      const apiError = err as ApiError;
-      setSubmitError(apiError.message ?? 'Failed to submit review. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end lg:items-center justify-center"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Write a review"
-    >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-t-3xl lg:rounded-2xl w-full max-w-lg p-6 shadow-2xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">Write a Review</h2>
-            <p className="text-xs text-gray-400 mt-0.5 truncate max-w-xs">{protocol.title}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
-            aria-label="Close modal"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Rating */}
-        <div className="mb-5">
-          <p className="text-sm font-semibold text-gray-700 mb-2">Your Rating</p>
-          <div className="flex items-center gap-3">
-            <StarRating rating={rating} size={30} interactive onChange={setRating} />
-            {rating > 0 && (
-              <span className="text-sm font-bold text-amber-600">{rating} / 5</span>
-            )}
-          </div>
-          {rating === 0 && (
-            <p className="text-xs text-gray-400 mt-1.5">Tap a star to rate this protocol</p>
-          )}
-        </div>
-
-        {/* Feedback */}
-        <div className="mb-5">
-          <label htmlFor="review-feedback" className="text-sm font-semibold text-gray-700 block mb-2">
-            Your Review
-          </label>
-          <textarea
-            id="review-feedback"
-            value={feedback}
-            onChange={(e) => setFeedback(e.target.value)}
-            placeholder="Share your experience with this protocol…"
-            rows={4}
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#118451]/40 focus:border-[#118451] resize-none transition-colors"
-          />
-          <p className="text-xs text-gray-400 mt-1 text-right">
-            {feedback.length} chars
-          </p>
-        </div>
-
-        {/* Error */}
-        {submitError && (
-          <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-4">
-            {submitError}
-          </p>
-        )}
-
-        {/* Actions */}
-        <div className="flex gap-3">
-          <Button variant="outline" fullWidth onClick={onClose} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            fullWidth
-            disabled={rating === 0 || !feedback.trim() || isSubmitting}
-            onClick={handleSubmit}
-          >
-            {isSubmitting ? 'Submitting…' : 'Submit Review'}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // ****Review Section ***********//***────
 interface ReviewSectionProps {
@@ -132,7 +20,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ protocol, onReviewAdded }
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const currentUserId = useAppSelector((s) => s.auth.user?.id ?? null);
 
@@ -174,6 +62,11 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ protocol, onReviewAdded }
     onReviewAdded?.();
   };
 
+  const handleEditRequest = (review: Review) => {
+    setEditingReview(review);
+    setShowForm(false);
+  };
+
   const handleDelete = async (review: Review) => {
     // Confirm
     if (!window.confirm('Delete this review? This action cannot be undone.')) return;
@@ -190,9 +83,145 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ protocol, onReviewAdded }
 
   const reviewCount = reviews.length;
 
+  const handleEditCancel = () => {
+    setEditingReview(null);
+  };
+
+  const handleEditSubmit = async (updatedReview: Review) => {
+    handleEditSuccess(updatedReview);
+  };
+
+  interface EditReviewFormProps {
+    review: Review;
+    protocolId: number;
+    onCancel: () => void;
+    onSuccess: (review: Review) => void;
+  }
+
+  const EditReviewForm: React.FC<EditReviewFormProps> = ({ review, protocolId, onCancel, onSuccess }) => {
+    const [rating, setRating] = useState(review.rating);
+    const [feedback, setFeedback] = useState(review.feedback ?? '');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const isValid = rating > 0 && feedback.trim().length > 0;
+
+    const handleSubmit = async () => {
+      if (!isValid || isSubmitting) return;
+      setIsSubmitting(true);
+      setError(null);
+
+      try {
+        const updated = await reviewService.update(protocolId, review.id, {
+          rating,
+          feedback: feedback.trim(),
+        });
+        onSuccess(updated);
+      } catch (err) {
+        const apiError = err as ApiError;
+        setError(apiError.message ?? 'Failed to update review. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        handleSubmit();
+      }
+    };
+
+    return (
+      <div className="rounded-2xl border border-gray-100 bg-white p-5 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-gray-900">Edit Review</p>
+            <p className="text-xs text-gray-500">Update your rating and feedback</p>
+          </div>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="text-sm font-semibold text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+
+        <div>
+          <p className="text-sm font-semibold text-gray-700 mb-2">
+            Your Rating <span className="text-gray-400 font-normal">(required)</span>
+          </p>
+          <div className="flex items-center gap-3">
+            <StarRating rating={rating} size={30} interactive onChange={setRating} />
+            {rating > 0 && (
+              <span className="text-sm font-semibold text-amber-600">{rating} / 5</span>
+            )}
+          </div>
+          {rating === 0 && (
+            <p className="text-xs text-gray-400 mt-2">Select a rating before saving.</p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="edit-review-feedback" className="text-sm font-semibold text-gray-700 block mb-1.5">
+            Review <span className="text-red-400">*</span>
+          </label>
+          <textarea
+            id="edit-review-feedback"
+            value={feedback}
+            onChange={(e) => setFeedback(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Share your updated experience with this protocol…"
+            rows={4}
+            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#118451]/40 focus:border-[#118451] resize-none transition-colors"
+          />
+          <p className="text-xs text-gray-400 mt-1 text-right">Ctrl+Enter to save</p>
+        </div>
+
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+        )}
+
+        <div className="flex justify-end">
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={!isValid || isSubmitting}
+            onClick={handleSubmit}
+          >
+            {isSubmitting ? 'Saving…' : 'Save Review'}
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-5">
-      {/* Rating summary card */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
+            <Plus size={18} />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-gray-900">
+              {reviewCount > 0 ? `${reviewCount} Review${reviewCount === 1 ? '' : 's'}` : 'Reviews'}
+            </h2>
+            <p className="text-xs text-gray-500">Share feedback and help other readers.</p>
+          </div>
+        </div>
+
+        <Button
+          variant={showForm ? 'outline' : 'primary'}
+          size="sm"
+          icon={<Plus size={14} />}
+          onClick={() => setShowForm((value) => !value)}
+        >
+          {showForm ? 'Cancel' : 'New Review'}
+        </Button>
+      </div>
+
       <div className="rounded-2xl border border-gray-100 bg-gradient-to-br from-amber-50 to-orange-50 p-5">
         <div className="flex items-center gap-4">
           <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-white shadow-sm flex-shrink-0">
@@ -208,138 +237,36 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ protocol, onReviewAdded }
                 : 'No reviews yet'}
             </p>
           </div>
-          <Button
-            variant="primary"
-            size="sm"
-            icon={<Plus size={15} />}
-            onClick={() => setShowModal(true)}
-          >
-            Review
-          </Button>
         </div>
       </div>
 
-      {/* Review list */}
+      {showForm && (
+        <CreateReviewForm
+          protocolId={protocol.id}
+          onSuccess={(review) => {
+            handleReviewSuccess(review);
+            setShowForm(false);
+          }}
+        />
+      )}
+
+      {editingReview && (
+        <EditReviewForm
+          review={editingReview}
+          protocolId={protocol.id}
+          onCancel={handleEditCancel}
+          onSuccess={handleEditSubmit}
+        />
+      )}
+
       <ReviewList
         reviews={reviews}
         isLoading={isLoading}
         error={error}
         currentUserId={currentUserId}
-        onEdit={(r) => setEditingReview(r)}
+        onEdit={handleEditRequest}
         onDelete={handleDelete}
       />
-
-      {/* Write review modal */}
-      {showModal && (
-        <AddReviewModal
-          protocol={protocol}
-          onClose={() => setShowModal(false)}
-          onSuccess={handleReviewSuccess}
-        />
-      )}
-
-      {editingReview && (
-        <EditReviewModal
-          review={editingReview}
-          protocol={protocol}
-          onClose={() => setEditingReview(null)}
-          onSuccess={handleEditSuccess}
-        />
-      )}
-    </div>
-  );
-};
-
-// ---------------- Edit Review Modal -------------------------------------
-interface EditReviewModalProps {
-  review: Review;
-  protocol: Protocol;
-  onClose: () => void;
-  onSuccess: (review: Review) => void;
-}
-
-const EditReviewModal: React.FC<EditReviewModalProps> = ({ review, protocol, onClose, onSuccess }) => {
-  const [rating, setRating] = useState(review.rating);
-  const [feedback, setFeedback] = useState(review.feedback ?? '');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async () => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      const updated = await reviewService.update(protocol.id, review.id, { rating, feedback });
-      onSuccess(updated);
-      onClose();
-    } catch (err) {
-      // eslint-disable-next-line no-alert
-      window.alert('Failed to update review. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end lg:items-center justify-center"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Edit review"
-    >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-t-3xl lg:rounded-2xl w-full max-w-lg p-6 shadow-2xl mx-auto">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">Edit Review</h2>
-            <p className="text-xs text-gray-400 mt-0.5 truncate max-w-xs">{protocol.title}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
-            aria-label="Close modal"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="mb-5">
-          <p className="text-sm font-semibold text-gray-700 mb-2">Your Rating</p>
-          <div className="flex items-center gap-3">
-            <StarRating rating={rating} size={30} interactive onChange={setRating} />
-            {rating > 0 && (
-              <span className="text-sm font-bold text-amber-600">{rating} / 5</span>
-            )}
-          </div>
-        </div>
-
-        <div className="mb-5">
-          <label htmlFor="edit-review-feedback" className="text-sm font-semibold text-gray-700 block mb-2">
-            Your Review
-          </label>
-          <textarea
-            id="edit-review-feedback"
-            value={feedback}
-            onChange={(e) => setFeedback(e.target.value)}
-            placeholder="Share your experience with this protocol…"
-            rows={4}
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#118451]/40 focus:border-[#118451] resize-none transition-colors"
-          />
-          <p className="text-xs text-gray-400 mt-1 text-right">{feedback.length} chars</p>
-        </div>
-
-        <div className="flex gap-3">
-          <Button variant="outline" fullWidth onClick={onClose} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            fullWidth
-            disabled={isSubmitting}
-            onClick={handleSubmit}
-          >
-            {isSubmitting ? 'Saving…' : 'Save Changes'}
-          </Button>
-        </div>
-      </div>
     </div>
   );
 };

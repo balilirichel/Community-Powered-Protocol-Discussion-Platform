@@ -8,6 +8,7 @@ import {
   Calendar,
   Trash2,
   Edit2,
+  ArrowRight, CornerDownLeft, Sparkles
 } from 'lucide-react';
 import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
@@ -466,133 +467,165 @@ const ProtocolDetailPage: React.FC = () => {
         </div>
 
         {/* ══ RIGHT / DESKTOP DISCUSSION PANEL ════════════════════════════════ */}
-        <div className="hidden lg:flex flex-col flex-1 min-w-0 bg-[#f8faf9]">
+      
+{/* ══ RIGHT / DESKTOP DISCUSSION PANEL ════════════════════════════════ */}
+<div className="hidden lg:flex flex-col flex-1 min-w-0 bg-slate-50/50 border-l border-gray-100">
 
-          {/* Panel header */}
-          <div className="sticky top-0 z-20 bg-white border-b border-gray-100 px-5 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-sm font-bold text-gray-900">Discussion</h2>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {threadCount > 0 ? `${threadCount} active thread${threadCount === 1 ? '' : 's'}` : 'No threads yet'}
-                </p>
-              </div>
-              <button
-                onClick={() => setActiveTab('threads')}
-                className="text-xs font-semibold text-[#118451] hover:text-[#065c38] transition-colors cursor-pointer"
-              >
-                View all →
-              </button>
+  {/* Panel Header */}
+  <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4.5 flex items-center justify-between">
+    <div>
+      <div className="flex items-center gap-1.5">
+        <h2 className="text-sm font-bold text-gray-900 tracking-tight">Community Discussion</h2>
+        <Sparkles size={14} className="text-amber-500 fill-amber-500 animate-pulse" />
+      </div>
+      <p className="text-xs text-gray-400 mt-0.5 font-medium">
+        {threadCount > 0 ? `${threadCount} active thread${threadCount === 1 ? '' : 's'}` : 'No conversations yet'}
+      </p>
+    </div>
+    <button
+      onClick={() => setActiveTab('threads')}
+      className="inline-flex items-center gap-1 text-xs font-semibold text-[#118451] hover:text-[#065c38] bg-[#e8f5f0] hover:bg-[#dbefe6] px-2.5 py-1.5 rounded-lg transition-all cursor-pointer group"
+    >
+      View all
+      <ArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
+    </button>
+  </div>
+
+  {/* Thread List Preview */}
+  <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3.5 custom-scrollbar">
+    {threadsLoading ? (
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="bg-white rounded-2xl p-4 animate-pulse space-y-3 border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-gray-100" />
+              <div className="h-2 w-16 rounded bg-gray-100" />
             </div>
-          </div>
-
-          {/* Thread list preview */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-            {threadsLoading ? (
-              <div className="space-y-3">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="bg-white rounded-2xl p-4 animate-pulse space-y-2 border border-gray-100">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-gray-100" />
-                      <div className="h-2.5 w-20 rounded bg-gray-100 flex-1" />
-                    </div>
-                    <div className="h-3 w-3/4 rounded bg-gray-100" />
-                    <div className="h-2.5 w-12 rounded bg-gray-100" />
-                  </div>
-                ))}
-              </div>
-            ) : threadsError ? (
-              <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-center">
-                <p className="text-xs text-red-500">{threadsError}</p>
-              </div>
-            ) : threads.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-6 text-center">
-                <div className="text-2xl mb-2">💬</div>
-                <p className="text-sm font-semibold text-gray-700">No threads yet</p>
-                <p className="text-xs text-gray-400 mt-1">Start the conversation below.</p>
-              </div>
-            ) : (
-              threads.slice(0, 6).map((thread) => {
-                const authorName = thread.user?.name ?? thread.author?.name ?? 'Unknown';
-                return (
-                  <button
-                    key={thread.id}
-                    onClick={() => navigate(`/threads/${thread.id}`, { state: { protocolId: protocol.id } })}
-                    className="w-full text-left bg-white rounded-2xl border border-gray-100 p-4 hover:border-[#118451]/30 hover:shadow-sm transition-all duration-150 group"
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <Avatar name={authorName} size="xs" />
-                      <span className="text-xs text-gray-500 font-medium truncate flex-1">{authorName}</span>
-                    </div>
-                    <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-[#118451] transition-colors mb-1.5">
-                      {thread.title}
-                    </h4>
-                    <div className="flex items-center gap-3 text-xs text-gray-400">
-                      <span className="flex items-center gap-1">
-                        <MessageSquare size={11} />
-                        {thread.comments_count ?? 0} replies
-                      </span>
-                    </div>
-                  </button>
-                );
-              })
-            )}
-          </div>
-
-          {/* Compose new thread */}
-          <div className="border-t border-gray-100 p-4 bg-white space-y-2">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Start a thread
-            </p>
-            <div className="relative">
-              <textarea
-                id="desktop-thread-composer"
-                placeholder="Ask a question or share a thought…"
-                rows={2}
-                onKeyDown={async (e) => {
-                  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                    const target = e.currentTarget;
-                    const body = target.value.trim();
-                    if (!body) return;
-                    try {
-                      const created = await threadService.create(protocol.id, {
-                        title: body.slice(0, 120),
-                        body,
-                      });
-                      handleThreadCreated(created);
-                      target.value = '';
-                    } catch {
-                      // non-422 errors handled globally
-                    }
-                  }
-                }}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 pr-10 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#118451]/40 focus:border-[#118451] resize-none bg-gray-50 transition-colors"
-              />
+            <div className="space-y-1.5">
+              <div className="h-3 w-full rounded bg-gray-100" />
+              <div className="h-3 w-4/5 rounded bg-gray-100" />
             </div>
-            <Button
-              variant="primary"
-              size="sm"
-              fullWidth
-              onClick={async () => {
-                const textarea = document.getElementById('desktop-thread-composer') as HTMLTextAreaElement | null;
-                const body = textarea?.value.trim();
-                if (!body) return;
-                try {
-                  const created = await threadService.create(protocol.id, {
-                    title: body.slice(0, 120),
-                    body,
-                  });
-                  handleThreadCreated(created);
-                  if (textarea) textarea.value = '';
-                } catch {
-                  // non-422 errors handled globally
-                }
-              }}
-            >
-              Post Thread
-            </Button>
+            <div className="h-2 w-10 rounded bg-gray-100" />
           </div>
+        ))}
+      </div>
+    ) : threadsError ? (
+      <div className="rounded-2xl border border-red-100 bg-red-50/60 p-4 text-center">
+        <p className="text-xs text-red-600 font-medium">{threadsError}</p>
+      </div>
+    ) : threads.length === 0 ? (
+      <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-8 text-center my-2 shadow-sm">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-50 text-xl mb-3 shadow-inner">
+          💬
         </div>
+        <p className="text-sm font-bold text-gray-800">No threads yet</p>
+        <p className="text-xs text-gray-400 mt-1 max-w-[200px] mx-auto">Be the voice that jumpshots the discussion!</p>
+      </div>
+    ) : (
+      threads.slice(0, 6).map((thread) => {
+        const authorName = thread.user?.name ?? thread.author?.name ?? 'Unknown';
+        return (
+          <button
+            key={thread.id}
+            onClick={() => navigate(`/threads/${thread.id}`, { state: { protocolId: protocol.id } })}
+            className="w-full text-left bg-white rounded-2xl border border-gray-100 p-4 
+                       hover:border-transparent hover:shadow-[0_8px_20px_-6px_rgba(17,132,81,0.12)] 
+                       hover:-translate-y-0.5 transition-all duration-200 ease-out group relative block"
+          >
+            {/* Meta context header */}
+            <div className="flex items-center gap-2 mb-2">
+              <Avatar name={authorName} size="xs" className="ring-1 ring-slate-100" />
+              <span className="text-[11px] text-gray-500 font-medium truncate flex-1">{authorName}</span>
+            </div>
+
+            {/* Title */}
+            <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug group-hover:text-[#118451] transition-colors mb-2.5">
+              {thread.title}
+            </h4>
+
+            {/* Interaction Footer badge */}
+            <div className="flex items-center justify-between border-t border-gray-50 pt-2 mt-1">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-50 text-slate-500 rounded-md text-[11px] font-medium transition-colors group-hover:bg-[#e8f5f0] group-hover:text-[#118451]">
+                <MessageSquare size={12} strokeWidth={2} />
+                {thread.comments_count ?? 0} {thread.comments_count === 1 ? 'reply' : 'replies'}
+              </span>
+              
+              {/* Ghost prompt arrow */}
+              <span className="text-xs text-[#118451] font-medium opacity-0 -translate-x-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0 inline-flex items-center gap-0.5">
+                Join <ArrowRight size={12} />
+              </span>
+            </div>
+          </button>
+        );
+      })
+    )}
+  </div>
+
+  {/* Compose New Thread Wrapper */}
+  <div className="border-t border-gray-100 p-4.5 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.02)] space-y-3">
+    <div className="flex items-center justify-between">
+      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+        Start a conversation
+      </p>
+      {/* UX Hint helper tag for shortcut execution */}
+      <span className="hidden sm:inline-flex items-center gap-0.5 text-[10px] text-gray-400 font-medium bg-gray-50 border border-gray-200 px-1.5 py-0.5 rounded-md">
+        <CornerDownLeft size={8} /> ⌘ + Enter
+      </span>
+    </div>
+
+    <div className="relative">
+      <textarea
+        id="desktop-thread-composer"
+        placeholder="Ask a question or share an insight with the community…"
+        rows={3} // Bounded up for cleaner visual context depth while filling text
+        onKeyDown={async (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            const target = e.currentTarget;
+            const body = target.value.trim();
+            if (!body) return;
+            try {
+              const created = await threadService.create(protocol.id, {
+                title: body.slice(0, 120),
+                body,
+              });
+              handleThreadCreated(created);
+              target.value = '';
+            } catch {
+              // non-422 errors handled globally
+            }
+          }
+        }}
+        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm placeholder-gray-400 
+                   focus:outline-none focus:ring-2 focus:ring-[#118451]/30 focus:border-[#118451] 
+                   resize-none bg-slate-50/50 focus:bg-white transition-all duration-150 leading-relaxed"
+      />
+    </div>
+
+    <Button
+      variant="primary"
+      size="md"
+      fullWidth
+      className="shadow-sm hover:shadow-md active:scale-[0.99] transition-all"
+      onClick={async () => {
+        const textarea = document.getElementById('desktop-thread-composer') as HTMLTextAreaElement | null;
+        const body = textarea?.value.trim();
+        if (!body) return;
+        try {
+          const created = await threadService.create(protocol.id, {
+            title: body.slice(0, 120),
+            body,
+          });
+          handleThreadCreated(created);
+          if (textarea) textarea.value = '';
+        } catch {
+          // non-422 errors handled globally
+        }
+      }}
+    >
+      Post Thread
+    </Button>
+  </div>
+</div>
       </div>
 
       {/* ── Mobile bottom action bar ── */}

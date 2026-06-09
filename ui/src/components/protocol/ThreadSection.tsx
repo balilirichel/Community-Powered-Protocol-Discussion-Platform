@@ -80,6 +80,7 @@ const ThreadSection: React.FC<ThreadSectionProps> = ({
 
   const handleEditThread = (thread: Thread) => {
     setEditingThread(thread);
+    setShowForm(false);
   };
 
   const handleDeleteThread = async (thread: Thread) => {
@@ -97,6 +98,115 @@ const ThreadSection: React.FC<ThreadSectionProps> = ({
   const handleUpdateThread = (updated: Thread) => {
     onThreadUpdated?.(updated);
     setEditingThread(null);
+  };
+
+  const handleEditCancel = () => {
+    setEditingThread(null);
+  };
+
+  interface EditThreadFormProps {
+    protocolId: number;
+    thread: Thread;
+    onCancel: () => void;
+    onSuccess: (thread: Thread) => void;
+  }
+
+  const EditThreadForm: React.FC<EditThreadFormProps> = ({ protocolId, thread, onCancel, onSuccess }) => {
+    const [title, setTitle] = useState(thread.title);
+    const [body, setBody] = useState(thread.body);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const isValid = title.trim().length > 0 && body.trim().length > 0;
+
+    const handleSubmit = async () => {
+      if (!isValid || isSubmitting) return;
+      setIsSubmitting(true);
+      setError(null);
+
+      try {
+        const updated = await threadService.update(protocolId, thread.id, {
+          title: title.trim(),
+          body: body.trim(),
+        });
+        onSuccess(updated);
+      } catch (err) {
+        const apiError = err as ApiError;
+        setError(apiError.message ?? 'Failed to update thread. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        handleSubmit();
+      }
+    };
+
+    return (
+      <div className="rounded-2xl border border-gray-100 bg-white p-5 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-gray-900">Edit Thread</p>
+            <p className="text-xs text-gray-500">Update the title or details for this thread.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="text-sm font-semibold text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+
+        <div>
+          <label htmlFor="edit-thread-title" className="text-sm font-semibold text-gray-700 block mb-1.5">
+            Thread Title <span className="text-red-400">*</span>
+          </label>
+          <input
+            id="edit-thread-title"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Update your thread title"
+            maxLength={200}
+            className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#118451]/40 focus:border-[#118451] transition-colors"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="edit-thread-body" className="text-sm font-semibold text-gray-700 block mb-1.5">
+            Details <span className="text-red-400">*</span>
+          </label>
+          <textarea
+            id="edit-thread-body"
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Update the thread details."
+            rows={4}
+            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#118451]/40 focus:border-[#118451] resize-none transition-colors"
+          />
+        </div>
+
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+        )}
+
+        <div className="flex justify-end">
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={!isValid || isSubmitting}
+            onClick={handleSubmit}
+          >
+            {isSubmitting ? 'Saving…' : 'Save Thread'}
+          </Button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -130,6 +240,15 @@ const ThreadSection: React.FC<ThreadSectionProps> = ({
         />
       )}
 
+      {editingThread && (
+        <EditThreadForm
+          protocolId={protocol.id}
+          thread={editingThread}
+          onCancel={handleEditCancel}
+          onSuccess={handleUpdateThread}
+        />
+      )}
+
       {/* Thread list */}
       <ThreadList
         threads={threads}
@@ -152,125 +271,6 @@ const ThreadSection: React.FC<ThreadSectionProps> = ({
           }}
         />
       )}
-
-      {editingThread && (
-        <EditThreadModal
-          protocolId={protocol.id}
-          thread={editingThread}
-          onClose={() => setEditingThread(null)}
-          onSuccess={handleUpdateThread}
-        />
-      )}
-    </div>
-  );
-};
-
-interface EditThreadModalProps {
-  protocolId: number;
-  thread: Thread;
-  onClose: () => void;
-  onSuccess: (thread: Thread) => void;
-}
-
-const EditThreadModal: React.FC<EditThreadModalProps> = ({ protocolId, thread, onClose, onSuccess }) => {
-  const [title, setTitle] = useState(thread.title);
-  const [body, setBody] = useState(thread.body);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async () => {
-    if (!title.trim() || !body.trim() || isSubmitting) return;
-
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      const updated = await threadService.update(protocolId, thread.id, {
-        title: title.trim(),
-        body: body.trim(),
-      });
-      onSuccess(updated);
-      onClose();
-    } catch (err) {
-      const apiError = err as ApiError;
-      setError(apiError.message ?? 'Failed to update thread. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end lg:items-center justify-center"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Edit thread"
-    >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-t-3xl lg:rounded-2xl w-full max-w-lg p-6 shadow-2xl mx-auto">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">Edit Thread</h2>
-            <p className="text-xs text-gray-400 mt-0.5 truncate max-w-xs">{thread.title}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
-            aria-label="Close modal"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="edit-thread-title" className="text-sm font-semibold text-gray-700 block mb-1.5">
-              Thread Title
-            </label>
-            <input
-              id="edit-thread-title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Update your thread title"
-              maxLength={200}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#118451]/40 focus:border-[#118451] transition-colors"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="edit-thread-body" className="text-sm font-semibold text-gray-700 block mb-1.5">
-              Details
-            </label>
-            <textarea
-              id="edit-thread-body"
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder="Update the thread details."
-              rows={4}
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#118451]/40 focus:border-[#118451] resize-none transition-colors"
-            />
-          </div>
-
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
-          )}
-
-          <div className="flex gap-3">
-            <Button variant="outline" fullWidth onClick={onClose} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              fullWidth
-              onClick={handleSubmit}
-              disabled={!title.trim() || !body.trim() || isSubmitting}
-            >
-              {isSubmitting ? 'Saving…' : 'Save Changes'}
-            </Button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
