@@ -76,6 +76,7 @@ class Protocol extends Model
             'title'         => (string) $this->title,
             'content'       => (string) ($this->content ?? ''),
             'user_id'       => (string) $this->user_id,
+            'user_name'     => (string) ($this->user->name ?? ''), 
             'tags'          => $this->tags ?? [],
             'votes'         => (int) ($this->votes_sum_value ?? $this->votes()->sum('value')),
             'rating'        => (float) $this->rating,
@@ -91,6 +92,7 @@ class Protocol extends Model
     protected function makeAllSearchableUsing(Builder $query): Builder
     {
         return $query
+            ->with('user') 
             ->withSum('votes', 'value')
             ->withCount('reviews');
     }

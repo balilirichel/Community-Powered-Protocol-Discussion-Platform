@@ -192,6 +192,7 @@ return [
                     'fields' => [
                         ['name' => 'id',            'type' => 'string'],
                         ['name' => 'user_id',         'type' => 'string'],
+                        ['name' => 'user_name',      'type' => 'string'],
                         ['name' => 'title',         'type' => 'string'],
                         ['name' => 'content',         'type' => 'string'],
                         ['name' => 'tags',          'type' => 'string[]', 'optional' => true],
@@ -204,8 +205,8 @@ return [
                 ],
                 'search-parameters' => [
                     // query_by drives search-as-you-type on title (and tags as secondary)
-                    'query_by'             => 'title,tags,content',
-                    'query_by_weights'     => '3,1,1',
+                    'query_by'             => 'title,tags,content,user_name',
+                    'query_by_weights'     => '3,1,1,1',
                     'num_typos'            => '1',
                     'prefix'               => 'true',
                 ],
@@ -224,6 +225,7 @@ return [
                         ['name' => 'id',             'type' => 'string'],
                         ['name' => 'protocol_id',    'type' => 'string'],
                         ['name' => 'user_id',         'type' => 'string'],
+                        ['name' => 'user_name',      'type' => 'string'],
                         ['name' => 'title',          'type' => 'string'],
                         ['name' => 'body',           'type' => 'string'],
                         ['name' => 'votes',          'type' => 'int32'],
@@ -234,8 +236,8 @@ return [
                 ],
                 'search-parameters' => [
                     // search-as-you-type on title; body as secondary fulltext field
-                    'query_by'             => 'title,body',
-                    'query_by_weights'     => '3,1',
+                    'query_by'             => 'title,body,user_name',
+                    'query_by_weights'     => '3,1,1',
                     'num_typos'            => '1',
                     'prefix'               => 'true',
                 ],

@@ -68,6 +68,7 @@ class Thread extends Model
         return [
             'id'             => (string) $this->id,
             'title'          => (string) $this->title,
+            'user_name'      => (string) ($this->user->name ?? ''),
             'body'           => (string) $this->body,
             'user_id'        => (string) $this->user_id,
             'protocol_id'    => (string) $this->protocol_id,
@@ -84,6 +85,7 @@ class Thread extends Model
     protected function makeAllSearchableUsing(Builder $query): Builder
     {
         return $query
+            ->with('user')  
             ->withSum('votes', 'value')
             ->withCount('comments');
     }
