@@ -420,10 +420,39 @@ const ProtocolDetailPage: React.FC = () => {
                         {
                           label: 'Rating',
                           value: protocol.rating ? (
-                            <span className="flex items-center gap-1">
-                              <Star size={13} fill="#f59e0b" className="text-amber-500" />
-                              <span className="font-bold text-gray-800">{protocol.rating}</span>
-                            </span>
+                            <div className="flex items-center gap-2">
+                              {/* 5-Star Row Wrapper */}
+                              <div className="flex items-center gap-0.5 text-amber-500" aria-label={`Rating: ${protocol.rating} out of 5 stars`}>
+                                {Array.from({ length: 5 }).map((_, index) => {
+                                  const starValue = index + 1;
+                                  
+                                  // Determine if the star should be full, half, or empty
+                                  if (protocol.rating as number >= starValue) {
+                                    // Full Star
+                                    return <Star key={index} size={13} fill="currentColor" className="text-amber-500" />;
+                                  } else if (protocol.rating as number > starValue - 1) {
+                                    // Half Star (Requires Lucide's half fill clip effect or customized styling, alternatively clean stroke)
+                                    return (
+                                      <div key={index} className="relative inline-block">
+                                        {/* Background Empty Star */}
+                                        <Star size={13} className="text-gray-200" />
+                                        {/* Foreground Clipped Half Star */}
+                                        <div className="absolute top-0 left-0 overflow-hidden w-[50%]">
+                                          <Star size={13} fill="currentColor" className="text-amber-500 max-w-none" />
+                                        </div>
+                                      </div>
+                                    );
+                                  } else {
+                                    // Empty Star
+                                    return <Star key={index} size={13} className="text-gray-200" />;
+                                  }
+                                })}
+                              </div>
+                              {/* Numerical Value Tag */}
+                              <span className="font-bold text-gray-800 tabular-nums">
+                                {typeof protocol.rating === 'number' ? protocol.rating.toFixed(1) : protocol.rating}
+                              </span>
+                            </div>
                           ) : (
                             <span className="text-gray-400">N/A</span>
                           ),

@@ -63,7 +63,7 @@ const ProtocolCard: React.FC<ProtocolCardProps> = ({
           </span>
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[2rem] bg-white/20 backdrop-blur-sm text-white text-xs">
             <BookOpen size={11} strokeWidth={2} />
-            {steps} steps
+            {steps} tags
           </span>
         </div>
 
@@ -98,10 +98,10 @@ const ProtocolCard: React.FC<ProtocolCardProps> = ({
           <div className="w-px h-3 bg-gray-200" />
 
           {/* Comments chip */}
-          <div className="flex items-center gap-1 text-gray-400">
+          {/* <div className="flex items-center gap-1 text-gray-400">
             <MessageSquare size={13} />
             <span className="text-xs font-medium text-gray-600 tabular-nums">{comments}</span>
-          </div>
+          </div> */}
 
           <div className="w-px h-3 bg-gray-200" />
 
