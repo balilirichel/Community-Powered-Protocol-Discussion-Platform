@@ -8,7 +8,10 @@ interface CommentStreamProps {
   isLoading: boolean;
   error: string | null;
   isDesktop: boolean;
+  currentUserId?: number | null;
   onReply: (commentId: number, authorName: string) => void;
+  onCommentUpdated: (updatedComment: Comment) => void;
+  onCommentDeleted: (commentId: number) => void;
 }
 
 const CommentStreamSkeleton: React.FC = () => (
@@ -35,7 +38,10 @@ const CommentStream: React.FC<CommentStreamProps> = ({
   isLoading,
   error,
   isDesktop,
+  currentUserId,
   onReply,
+  onCommentUpdated,
+  onCommentDeleted,
 }) => {
   if (isLoading) {
     return (
@@ -90,7 +96,10 @@ const CommentStream: React.FC<CommentStreamProps> = ({
           maxMobileDepth={2}
           maxDesktopDepth={4}
           isDesktop={isDesktop}
+          currentUserId={currentUserId}
           onReply={onReply}
+          onCommentUpdated={onCommentUpdated}
+          onCommentDeleted={onCommentDeleted}
         />
       ))}
     </section>

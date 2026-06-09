@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CornerDownRight, MoreHorizontal, ChevronDown } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 import VoteController from '../ui/VoteController';
@@ -30,7 +30,10 @@ interface CommentItemProps {
   maxMobileDepth?: number;
   maxDesktopDepth?: number;
   isDesktop?: boolean;
+  currentUserId?: number | null;
   onReply?: (commentId: number, authorName: string) => void;
+  onCommentUpdated?: (updatedComment: Comment) => void;
+  onCommentDeleted?: (commentId: number) => void;
 }
 
 const CommentItem: React.FC<CommentItemProps> = ({
@@ -39,9 +42,17 @@ const CommentItem: React.FC<CommentItemProps> = ({
   maxMobileDepth = 2,
   maxDesktopDepth = 4,
   isDesktop = false,
+  currentUserId,
   onReply,
+  onCommentUpdated,
+  onCommentDeleted,
 }) => {
   const [showDeepReplies, setShowDeepReplies] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(comment.body);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const maxDepth = isDesktop ? maxDesktopDepth : maxMobileDepth;
   const hasReplies = (comment.replies?.length ?? 0) > 0;
@@ -55,6 +66,50 @@ const CommentItem: React.FC<CommentItemProps> = ({
     return typeof raw === 'number' ? (raw as 1 | -1) : null;
   });
   const [loading, setLoading] = useState(false);
+
+  const isOwner = Boolean(currentUserId && comment.author?.id === currentUserId);
+
+  useEffect(() => {
+    setEditText(comment.body);
+  }, [comment.body]);
+
+  const handleSave = async () => {
+    if (actionLoading || !comment.id || !editText.trim()) return;
+
+    setActionLoading(true);
+    setActionError(null);
+
+    try {
+      const updated = await commentService.update(comment.thread_id, comment.id, {
+        body: editText.trim(),
+      });
+      onCommentUpdated?.(updated);
+      setIsEditing(false);
+      setIsMenuOpen(false);
+    } catch (err) {
+      setActionError('Failed to save comment. Please try again.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (actionLoading || !comment.id) return;
+    if (!window.confirm('Delete this comment? This action cannot be undone.')) return;
+
+    setActionLoading(true);
+    setActionError(null);
+
+    try {
+      await commentService.delete(comment.thread_id, comment.id);
+      onCommentDeleted?.(comment.id);
+    } catch (err) {
+      setActionError('Failed to delete comment. Please try again.');
+    } finally {
+      setActionLoading(false);
+      setIsMenuOpen(false);
+    }
+  };
 
   const borderClasses =
     level === 1
@@ -78,17 +133,86 @@ const CommentItem: React.FC<CommentItemProps> = ({
     <div className={`${marginLeft} ${borderClasses}`}>
       <div className="py-3">
         {/* Author + time */}
-        <div className="flex items-center gap-2 mb-1.5">
+        <div className="flex items-center gap-2 mb-1.5 relative">
           <Avatar name={authorName} size="xs" />
           <span className="text-xs font-semibold text-gray-800">{authorName}</span>
           <span className="text-xs text-gray-400">{formatRelativeDate(comment.created_at)}</span>
-          <button className="ml-auto text-gray-300 hover:text-gray-500 cursor-pointer">
-            <MoreHorizontal size={14} />
-          </button>
+
+          {isOwner && (
+            <div className="ml-auto relative">
+              <button
+                type="button"
+                onClick={() => setIsMenuOpen((prev) => !prev)}
+                aria-haspopup="true"
+                aria-expanded={isMenuOpen}
+                className="text-gray-400 hover:text-gray-600 p-2 rounded-full transition-colors"
+              >
+                <MoreHorizontal size={16} />
+              </button>
+              {isMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-36 rounded-2xl border border-gray-200 bg-white shadow-lg text-left z-20">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditing(true);
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Body */}
-        <p className="text-sm text-gray-700 leading-relaxed mb-2">{comment.body}</p>
+        {/* Body or inline editor */}
+        {isEditing ? (
+          <div className="space-y-3 mb-2">
+            <textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              rows={3}
+              disabled={actionLoading}
+              className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#118451]/40 focus:border-[#118451] resize-none"
+            />
+            {actionError && (
+              <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{actionError}</p>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={!editText.trim() || actionLoading}
+                className="inline-flex items-center justify-center rounded-[2rem] bg-[#118451] px-4 py-2 text-xs font-semibold text-white hover:bg-[#065c38] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {actionLoading ? 'Saving…' : 'Save'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditText(comment.body);
+                  setActionError(null);
+                }}
+                disabled={actionLoading}
+                className="inline-flex items-center justify-center rounded-[2rem] border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-700 leading-relaxed mb-2">{comment.body}</p>
+        )}
 
         {/* Actions */}
         <div className="flex items-center gap-3">
@@ -125,9 +249,6 @@ const CommentItem: React.FC<CommentItemProps> = ({
                 } else {
                   await commentService.removeVote(comment.id);
                 }
-
-                // refresh authoritative counts for the comment
-                // comment list endpoints return paginated data; to keep simple, try to rely on success
               } catch (err) {
                 setVotes(prevVotes);
                 setUserVote(prevUser);
@@ -169,7 +290,10 @@ const CommentItem: React.FC<CommentItemProps> = ({
                 maxMobileDepth={maxMobileDepth}
                 maxDesktopDepth={maxDesktopDepth}
                 isDesktop={isDesktop}
+                currentUserId={currentUserId}
                 onReply={onReply}
+                onCommentUpdated={onCommentUpdated}
+                onCommentDeleted={onCommentDeleted}
               />
             ))
           )}

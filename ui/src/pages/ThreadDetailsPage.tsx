@@ -55,6 +55,41 @@ const ThreadDetailsPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const currentUserId = useAppSelector((s) => s.auth.user?.id ?? null);
 
+  const updateCommentInTree = (items: Comment[], commentId: number, updater: (comment: Comment) => Comment): Comment[] =>
+    items.map((item) => {
+      if (item.id === commentId) {
+        return updater(item);
+      }
+
+      if (item.replies) {
+        return { ...item, replies: updateCommentInTree(item.replies, commentId, updater) };
+      }
+
+      return item;
+    });
+
+  const removeCommentFromTree = (items: Comment[], commentId: number): Comment[] =>
+    items.reduce<Comment[]>((result, item) => {
+      if (item.id === commentId) {
+        return result;
+      }
+
+      if (item.replies) {
+        const replies = removeCommentFromTree(item.replies, commentId);
+        return [...result, { ...item, replies }];
+      }
+
+      return [...result, item];
+    }, []);
+
+  const handleCommentUpdated = (updatedComment: Comment) => {
+    setComments((current) => updateCommentInTree(current, updatedComment.id, () => updatedComment));
+  };
+
+  const handleCommentDeleted = (commentId: number) => {
+    setComments((current) => removeCommentFromTree(current, commentId));
+  };
+
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
   const composerRef = useRef<HTMLTextAreaElement>(null);
 
@@ -246,7 +281,10 @@ const ThreadDetailsPage: React.FC = () => {
           isLoading={commentsLoading}
           error={commentsError}
           isDesktop={isDesktop}
+          currentUserId={currentUserId}
           onReply={handleReply}
+          onCommentUpdated={handleCommentUpdated}
+          onCommentDeleted={handleCommentDeleted}
         />
 
         {/* Compose bar */}
