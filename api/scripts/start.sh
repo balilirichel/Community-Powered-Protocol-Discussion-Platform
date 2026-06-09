@@ -1,0 +1,20 @@
+#!/bin/sh
+
+echo "Running migrations..."
+php artisan migrate --force
+
+echo "Starting PHP-FPM..."
+php-fpm -D
+
+echo "Starting Nginx..."
+nginx -g 'daemon off;' &
+
+echo "Seeding database..."
+php artisan db:seed --force
+
+echo "Indexing Typesense..."
+php artisan scout:import 'App\Models\Protocol'
+php artisan scout:import 'App\Models\Thread'
+
+echo "Done!"
+wait
