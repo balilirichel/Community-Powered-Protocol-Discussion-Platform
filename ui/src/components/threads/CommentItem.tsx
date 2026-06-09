@@ -53,8 +53,8 @@ const CommentItem: React.FC<CommentItemProps> = ({
   const [editText, setEditText] = useState(comment.body);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-
-  const maxDepth = isDesktop ? maxDesktopDepth : maxMobileDepth;
+  const [showDeepReplies, setShowDeepReplies] = useState(false);
+  // const maxDepth = isDesktop ? maxDesktopDepth : maxMobileDepth;
   const hasReplies = (comment.replies?.length ?? 0) > 0;
   // const isAtDepthLimit = level >= maxDepth - 1;
 
@@ -272,20 +272,61 @@ const CommentItem: React.FC<CommentItemProps> = ({
       {/* Render nested replies */}
       {hasReplies && (
         <div>
-          {comment.replies!.map((reply) => (
-            <CommentItem
-              key={reply.id}
-              comment={reply}
-              level={level + 1}
-              maxMobileDepth={maxMobileDepth}
-              maxDesktopDepth={maxDesktopDepth}
-              isDesktop={isDesktop}
-              currentUserId={currentUserId}
-              onReply={onReply}
-              onCommentUpdated={onCommentUpdated}
-              onCommentDeleted={onCommentDeleted}
-            />
-          ))}
+          {level === 0 ? (
+            // Top-level replies render immediately
+            comment.replies!.map((reply) => (
+              <CommentItem
+                key={reply.id}
+                comment={reply}
+                level={level + 1}
+                maxMobileDepth={maxMobileDepth}
+                maxDesktopDepth={maxDesktopDepth}
+                isDesktop={isDesktop}
+                currentUserId={currentUserId}
+                onReply={onReply}
+                onCommentUpdated={onCommentUpdated}
+                onCommentDeleted={onCommentDeleted}
+              />
+            ))
+          ) : (
+            // Deeper replies are hidden behind a click
+            <>
+              {!showDeepReplies ? (
+                <button
+                  onClick={() => setShowDeepReplies(true)}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-[#118451] hover:text-[#065c38] cursor-pointer py-1.5 mb-2 ml-2 transition-colors"
+                >
+                  <ChevronDown size={13} />
+                  {comment.replies!.length}{' '}
+                  {comment.replies!.length === 1 ? 'reply' : 'replies'}
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setShowDeepReplies(false)}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 hover:text-gray-600 cursor-pointer py-1.5 mb-2 ml-2 transition-colors"
+                  >
+                    <ChevronDown size={13} className="rotate-180 transition-transform" />
+                    Hide replies
+                  </button>
+                  {comment.replies!.map((reply) => (
+                    <CommentItem
+                      key={reply.id}
+                      comment={reply}
+                      level={level + 1}
+                      maxMobileDepth={maxMobileDepth}
+                      maxDesktopDepth={maxDesktopDepth}
+                      isDesktop={isDesktop}
+                      currentUserId={currentUserId}
+                      onReply={onReply}
+                      onCommentUpdated={onCommentUpdated}
+                      onCommentDeleted={onCommentDeleted}
+                    />
+                  ))}
+                </>
+              )}
+            </>
+          )}
         </div>
       )}
     </div>
