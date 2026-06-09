@@ -234,8 +234,8 @@ return [
                 ],
                 'search-parameters' => [
                     // search-as-you-type on title; body as secondary fulltext field
-                    'query_by'             => 'title,body,content',
-                    'query_by_weights'     => '3,1,1',
+                    'query_by'             => 'title,body',
+                    'query_by_weights'     => '3,1',
                     'num_typos'            => '1',
                     'prefix'               => 'true',
                 ],
