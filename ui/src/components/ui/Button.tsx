@@ -9,6 +9,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: React.ReactNode;
   iconPosition?: 'left' | 'right';
   fullWidth?: boolean;
+  isLoading?: boolean;
+  loadingText?: string;
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
@@ -32,12 +34,16 @@ const Button: React.FC<ButtonProps> = ({
   icon,
   iconPosition = 'left',
   fullWidth = false,
+  isLoading = false,
+  loadingText,
   children,
   className = '',
   ...props
 }) => {
   return (
     <button
+      aria-busy={isLoading}
+      disabled={isLoading || props.disabled}
       className={[
         'inline-flex items-center justify-center rounded-[2rem] font-semibold',
         'transition-all duration-150 ease-out cursor-pointer',
@@ -52,12 +58,36 @@ const Button: React.FC<ButtonProps> = ({
         .join(' ')}
       {...props}
     >
-      {icon && iconPosition === 'left' && (
-        <span className="flex-shrink-0">{icon}</span>
-      )}
-      {children}
-      {icon && iconPosition === 'right' && (
-        <span className="flex-shrink-0">{icon}</span>
+      {isLoading ? (
+        <span className="flex items-center gap-2">
+          <span className="flex-shrink-0">
+            <svg
+              role="status"
+              aria-hidden="false"
+              className="animate-spin"
+              width={16}
+              height={16}
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.15" strokeWidth="4" />
+              <path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="sr-only" aria-live="polite">{loadingText ?? 'Loading'}</span>
+          <span className="hidden sm:inline">{loadingText ?? children}</span>
+        </span>
+      ) : (
+        <>
+          {icon && iconPosition === 'left' && (
+            <span className="flex-shrink-0">{icon}</span>
+          )}
+          {children}
+          {icon && iconPosition === 'right' && (
+            <span className="flex-shrink-0">{icon}</span>
+          )}
+        </>
       )}
     </button>
   );

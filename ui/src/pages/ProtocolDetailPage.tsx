@@ -31,6 +31,8 @@ const formatDate = (value: string) =>
   });
 
 // ****Page-level skeleton ***********//─
+import Skeleton from '../components/ui/Skeleton';
+
 const PageSkeleton: React.FC = () => (
   <div className="flex min-h-screen bg-white">
     {/* Sidebar placeholder */}
@@ -39,49 +41,51 @@ const PageSkeleton: React.FC = () => (
     <div className="flex-1 flex flex-col lg:flex-row min-w-0">
       <div className="flex-1 flex flex-col min-w-0">
         {/* Hero skeleton */}
-        <div className="h-48 bg-gradient-to-br from-gray-200 to-gray-100 animate-pulse" />
+        <div className="h-48 bg-gradient-to-br from-gray-200 to-gray-100">
+          <div className="h-full w-full" />
+        </div>
 
         {/* Author row skeleton */}
-        <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-100 animate-pulse">
-          <div className="w-10 h-10 rounded-full bg-gray-100" />
+        <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-100">
+          <Skeleton width={40} height={40} className="flex-shrink-0" rounded />
           <div className="space-y-1.5 flex-1">
-            <div className="h-3 w-32 rounded bg-gray-100" />
-            <div className="h-2.5 w-20 rounded bg-gray-100" />
+            <Skeleton width="40%" height="12px" />
+            <Skeleton width="25%" height="10px" />
           </div>
-          <div className="h-8 w-20 rounded-full bg-gray-100" />
+          <Skeleton width={80} height={32} />
         </div>
 
         {/* Tab bar skeleton */}
-        <div className="flex border-b border-gray-100 animate-pulse">
+        <div className="flex border-b border-gray-100">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex-1 py-3 px-4">
-              <div className="h-3 w-16 rounded bg-gray-100 mx-auto" />
+              <Skeleton width={64} height={12} className="mx-auto" />
             </div>
           ))}
         </div>
 
         {/* Content skeleton */}
-        <div className="p-4 space-y-3 animate-pulse">
+        <div className="p-4 space-y-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-3 rounded bg-gray-100" style={{ width: `${100 - i * 10}%` }} />
+            <Skeleton key={i} width={`${100 - i * 10}%`} height="12px" />
           ))}
         </div>
       </div>
 
       {/* Desktop right panel skeleton */}
       <div className="hidden lg:flex flex-col flex-1 min-w-0 bg-gray-50 border-l border-gray-100">
-        <div className="px-5 py-4 border-b border-gray-100 animate-pulse">
-          <div className="h-4 w-28 rounded bg-gray-200" />
-          <div className="h-3 w-20 rounded bg-gray-200 mt-2" />
+        <div className="px-5 py-4 border-b border-gray-100">
+          <Skeleton width={112} height={16} />
+          <Skeleton width={80} height={12} className="mt-2" />
         </div>
-        <div className="p-5 space-y-3 animate-pulse">
+        <div className="p-5 space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-white rounded-2xl p-4 space-y-2">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-gray-100" />
-                <div className="h-2.5 w-20 rounded bg-gray-100" />
+                <Skeleton width={24} height={24} rounded />
+                <Skeleton width={80} height={12} />
               </div>
-              <div className="h-3 w-3/4 rounded bg-gray-100" />
+              <Skeleton width="75%" height={12} />
             </div>
           ))}
         </div>

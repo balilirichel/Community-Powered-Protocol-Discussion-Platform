@@ -21,6 +21,7 @@ const VoteController: React.FC<VoteControllerProps> = ({
   const [userVote, setUserVote] = useState<1 | -1 | null>(initialUserVote);
   const [upvotes, setUpvotes] = useState(initialUpvotes);
   const [downvotes, setDownvotes] = useState(initialDownvotes);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     setUserVote(initialUserVote);
@@ -40,6 +41,11 @@ const VoteController: React.FC<VoteControllerProps> = ({
       open();
       return;
     }
+
+    // simple local debounce to avoid rapid double clicks and provide immediate feedback
+    if (processing) return;
+    setProcessing(true);
+    window.setTimeout(() => setProcessing(false), 900);
 
     let newVote: 1 | -1 | null = direction;
 
@@ -101,6 +107,7 @@ const VoteController: React.FC<VoteControllerProps> = ({
             ? 'text-[#118451] font-semibold'
             : 'text-gray-500 hover:text-[#118451] hover:bg-[#e8f5f0]',
         ].join(' ')}
+        disabled={processing}
       >
         <ArrowUp size={iconSize} strokeWidth={isUpActive ? 2.5 : 2} />
         <span className="font-semibold tabular-nums">{upvotes}</span>
@@ -118,6 +125,7 @@ const VoteController: React.FC<VoteControllerProps> = ({
             ? 'text-rose-500 font-semibold'
             : 'text-gray-500 hover:text-rose-500 hover:bg-rose-50',
         ].join(' ')}
+        disabled={processing}
       >
         <ArrowDown size={iconSize} strokeWidth={isDownActive ? 2.5 : 2} />
         <span className="font-semibold tabular-nums">{downvotes}</span>

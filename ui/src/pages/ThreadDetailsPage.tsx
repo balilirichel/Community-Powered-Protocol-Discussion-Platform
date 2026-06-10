@@ -11,23 +11,26 @@ import type { Comment, CreateCommentRequest } from '../types/comment';
 import type { ApiError } from '../types/api';
 
 // ****Thread loading skeleton ──────────────────────────────────────────────────
+import Skeleton from '../components/ui/Skeleton';
+import Button from '../components/ui/Button';
+
 const ThreadHeaderSkeleton: React.FC = () => (
-  <header className="sticky top-0 z-30 bg-white border-b border-gray-100 animate-pulse">
+  <header className="sticky top-0 z-30 bg-white border-b border-gray-100">
     <div className="flex items-center gap-2 px-4 py-3">
-      <div className="w-5 h-5 rounded bg-gray-100" />
-      <div className="h-3 w-40 rounded bg-gray-100" />
+      <Skeleton width={20} height={20} rounded />
+      <Skeleton width={160} height={12} />
     </div>
     <div className="px-4 pb-4 space-y-3">
-      <div className="h-5 w-3/4 rounded bg-gray-100" />
+      <Skeleton width="75%" height={20} />
       <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-full bg-gray-100" />
-        <div className="h-3 w-20 rounded bg-gray-100" />
-        <div className="h-3 w-14 rounded bg-gray-100" />
+        <Skeleton width={24} height={24} rounded />
+        <Skeleton width={80} height={12} />
+        <Skeleton width={56} height={12} />
       </div>
       <div className="space-y-1.5">
-        <div className="h-3 w-full rounded bg-gray-100" />
-        <div className="h-3 w-5/6 rounded bg-gray-100" />
-        <div className="h-3 w-4/6 rounded bg-gray-100" />
+        <Skeleton width="100%" height={12} />
+        <Skeleton width="80%" height={12} />
+        <Skeleton width="60%" height={12} />
       </div>
     </div>
   </header>
@@ -414,22 +417,12 @@ const EditThreadModal: React.FC<EditThreadModalProps> = ({ thread, protocolId, o
           )}
 
           <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="inline-flex flex-1 items-center justify-center rounded-[2rem] border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-all duration-150"
-            >
+            <Button variant="outline" size="md" onClick={onClose} disabled={isSubmitting} className="flex-1">
               Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={!title.trim() || !body.trim() || isSubmitting}
-              className="inline-flex flex-1 items-center justify-center rounded-[2rem] bg-[#118451] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#065c38] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? 'Saving…' : 'Save Changes'}
-            </button>
+            </Button>
+            <Button variant="primary" size="md" onClick={handleSubmit} isLoading={isSubmitting} loadingText="Saving changes..." className="flex-1">
+              Save Changes
+            </Button>
           </div>
         </div>
       </div>

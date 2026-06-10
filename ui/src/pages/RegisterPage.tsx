@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../api/authService';
 import { useAppDispatch } from '../store/hooks';
 import { setCredentials } from '../store/slices/authSlice';
+import Button from '../components/ui/Button';
 
 export default function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false);
@@ -157,12 +158,9 @@ export default function RegisterPage() {
                             </div>
                         </div>
                         <div className="pt-2">
-                            <button
-                                type="submit"
-                                className="w-full py-3 bg-[#118451] hover:bg-[#065c38] text-white font-bold text-[15px] rounded-[2rem] shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#18ac6a] transition-all duration-150"
-                                disabled={isSubmitting}>
+                            <Button type="submit" isLoading={isSubmitting} loadingText="Creating account..." fullWidth>
                                 Sign up
-                            </button>
+                            </Button>
                         </div>
                     </form>
 

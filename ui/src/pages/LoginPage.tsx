@@ -7,6 +7,7 @@ import { authService } from '../api/authService';
 import { setCredentials } from '../store/slices/authSlice';
 import BrandCheckbox from "../components/ui/BrandCheckbox";
 import CardBanner from "../components/ui/CardBanner";
+import Button from '../components/ui/Button';
 import { Link } from 'react-router-dom';
 
 export default function LoginPage() {
@@ -151,13 +152,9 @@ export default function LoginPage() {
 
                         {/* Primary Action Button (Strictly 2rem pill border-radius) */}
                         <div className="pt-2">
-                            <button
-                                type="submit"
-                                className="w-full py-3 bg-[#118451] hover:bg-[#065c38] text-white font-bold text-[15px] rounded-[2rem] shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#18ac6a] transition-all duration-150"
-                                disabled={isSubmitting}
-                            >
+                            <Button type="submit" isLoading={isSubmitting} loadingText="Signing in..." fullWidth>
                                 Sign in
-                            </button>
+                            </Button>
                         </div>
                     </form>
 
