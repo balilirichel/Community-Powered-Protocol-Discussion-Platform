@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, ArrowUp } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
+import VoteController from '../ui/VoteController';
+import { threadService } from '../../api/threadService';
 import Avatar from '../ui/Avatar';
 import type { Thread } from '../../types/thread';
 
@@ -35,6 +37,76 @@ const ThreadCard: React.FC<ThreadCardProps> = ({ thread, protocolId, compact = f
   const handleNavigate = () => {
     if (protocolId == null) return;
     navigate(`/threads/${thread.id}`, { state: { protocolId } });
+  };
+
+  const upvotes = thread.upvotes_count ?? 0;
+  const downvotes = thread.downvotes_count ?? 0;
+  const [upvoteCount, setUpvoteCount] = useState<number>(upvotes);
+  const [downvoteCount, setDownvoteCount] = useState<number>(downvotes);
+  const [userVote, setUserVote] = useState<1 | -1 | null>(() => {
+    const raw = (thread as any).user_vote ?? (thread as any).vote ?? null;
+    return typeof raw === 'number' ? (raw as 1 | -1) : null;
+  });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => setUpvoteCount(upvotes), [upvotes]);
+  useEffect(() => setDownvoteCount(downvotes), [downvotes]);
+  useEffect(() => {
+    const raw = (thread as any).user_vote ?? (thread as any).vote ?? null;
+    setUserVote(typeof raw === 'number' ? (raw as 1 | -1) : null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thread.id]);
+
+  const handleVote = async (newVote: 1 | -1 | null) => {
+    if (!thread.id || loading) return;
+
+    const prevUp = upvoteCount;
+    const prevDown = downvoteCount;
+    const prevUser = userVote;
+
+    const nextCounts = () => {
+      if (prevUser === newVote) {
+        return { upvotes: prevUp, downvotes: prevDown };
+      }
+      if (prevUser === null && newVote === 1) return { upvotes: prevUp + 1, downvotes: prevDown };
+      if (prevUser === null && newVote === -1) return { upvotes: prevUp, downvotes: prevDown + 1 };
+      if (prevUser === 1 && newVote === null) return { upvotes: prevUp - 1, downvotes: prevDown };
+      if (prevUser === -1 && newVote === null) return { upvotes: prevUp, downvotes: prevDown - 1 };
+      if (prevUser === 1 && newVote === -1) return { upvotes: prevUp - 1, downvotes: prevDown + 1 };
+      if (prevUser === -1 && newVote === 1) return { upvotes: prevUp + 1, downvotes: prevDown - 1 };
+      return { upvotes: prevUp, downvotes: prevDown };
+    };
+
+    const { upvotes: nextUpvotes, downvotes: nextDownvotes } = nextCounts();
+    setUpvoteCount(nextUpvotes);
+    setDownvoteCount(nextDownvotes);
+    setUserVote(newVote);
+    setLoading(true);
+
+    try {
+      if (newVote === null) {
+        await threadService.removeVote(thread.id);
+      } else {
+        await threadService.vote(thread.id, { vote: newVote });
+      }
+
+      // refresh authoritative counts when possible
+      if (thread.protocol?.id) {
+        const fresh = await threadService.get(thread.protocol.id, thread.id);
+        setUpvoteCount(fresh.upvotes_count ?? nextUpvotes);
+        setDownvoteCount(fresh.downvotes_count ?? nextDownvotes);
+        const raw = (fresh as any).user_vote ?? (fresh as any).vote ?? null;
+        setUserVote(typeof raw === 'number' ? (raw as 1 | -1) : newVote);
+      }
+    } catch (err) {
+      setUpvoteCount(prevUp);
+      setDownvoteCount(prevDown);
+      setUserVote(prevUser);
+      // eslint-disable-next-line no-alert
+      alert('Vote failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -106,22 +178,25 @@ const ThreadCard: React.FC<ThreadCardProps> = ({ thread, protocolId, compact = f
       )}
 
       {/* Metrics */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1 text-gray-400">
-          <MessageSquare size={12} />
+      <div className="flex items-center gap-3 mt-2">
+        {/* Vote controls - stop propagation so clicks don't navigate away */}
+        <div onClick={(e) => e.stopPropagation()} className="flex-shrink-0">
+          <VoteController
+            initialUpvotes={upvoteCount}
+            initialDownvotes={downvoteCount}
+            userVote={userVote}
+            size={compact ? 'sm' : 'md'}
+            onVote={(v) => { void handleVote(v); }}
+          />
+        </div>
+
+        {/* Comments */}
+        <div className="flex items-center gap-1 text-gray-400 ml-2">
+          <MessageSquare size={14} />
           <span className="text-xs font-medium text-gray-500">
-            {thread.comments_count ?? 0} Threads
+            {thread.comments_count ?? 0}
           </span>
         </div>
-        {(thread.upvotes_count ?? 0) > 0 && (
-          <>
-            <div className="w-px h-3 bg-gray-200" />
-            <div className="flex items-center gap-1 text-[#118451]">
-              <ArrowUp size={12} strokeWidth={2.5} />
-              <span className="text-xs font-semibold">{thread.upvotes_count}</span>
-            </div>
-          </>
-        )}
       </div>
     </div>
   );
