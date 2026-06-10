@@ -35,35 +35,32 @@ function App() {
         <Route
           path="/login"
           element={
-            <PublicRoute>
-              <LoginPage />
-            </PublicRoute>
+              <PublicRoute>
+                <LoginPage />
+              </PublicRoute>
+          
           }
         />
         <Route
           path="/register"
           element={
-            <PublicRoute>
-              <RegisterPage />
-            </PublicRoute>
+               <PublicRoute>
+                <RegisterPage />
+              </PublicRoute>
           }
         />
-
         {/* Protected routes */}
         <Route
           path="/"
           element={
-            <ProtectedRoute>
               <HomePage />
-            </ProtectedRoute>
+         
           }
         />
         <Route
           path="/threads"
-          element={
-            <ProtectedRoute>
+          element={       
               <ThreadPage />
-            </ProtectedRoute>
           }
         />
          <Route
@@ -86,17 +83,13 @@ function App() {
         <Route
           path="/protocols/:slug"
           element={
-            <ProtectedRoute>
               <ProtocolDetailPage />
-            </ProtectedRoute>
           }
         />
         <Route
           path="/threads/:id"
           element={
-            <ProtectedRoute>
               <ThreadDetailsPage />
-            </ProtectedRoute>
           }
         />
 
