@@ -12,6 +12,7 @@ import ProfilePage from './pages/ProfilePage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { PublicRoute } from './components/PublicRoute';
 import { useAuth } from './hooks/useAuth';
+import { AuthModalProvider } from './components/auth/AuthModalContext';
 
 function App() {
   const { token, fetchUser } = useAuth();
@@ -30,6 +31,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <AuthModalProvider>
       <Routes>
         {/* Public routes */}
         <Route
@@ -96,6 +98,7 @@ function App() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </AuthModalProvider>
       <ToastContainer
         position="top-right"
         autoClose={3000}

@@ -1,5 +1,6 @@
 import React from 'react';
 import ReviewCard from './ReviewCard';
+import useRequireAuth from '../../hooks/useRequireAuth';
 import type { Review } from '../../types/review';
 
 // ****Skeleton loader ***********//***───
@@ -65,6 +66,8 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviews, isLoading, error, curr
     );
   }
 
+  const { isAuthenticated, open } = useRequireAuth();
+
   return (
     <div className="space-y-3">
       {reviews.map((review) => (
@@ -72,8 +75,8 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviews, isLoading, error, curr
           key={review.id}
           review={review}
           canManage={Boolean(currentUserId && review.author?.id === currentUserId)}
-          onEdit={onEdit ? () => onEdit(review) : undefined}
-          onDelete={onDelete ? () => onDelete(review) : undefined}
+          onEdit={onEdit ? () => (isAuthenticated ? onEdit(review) : open()) : undefined}
+          onDelete={onDelete ? () => (isAuthenticated ? onDelete(review) : open()) : undefined}
         />
       ))}
     </div>

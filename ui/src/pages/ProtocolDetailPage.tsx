@@ -6,8 +6,6 @@ import {
   MessageSquare,
   Plus,
   Calendar,
-  Trash2,
-  Edit2,
   ArrowRight, CornerDownLeft, Sparkles
 } from 'lucide-react';
 import Avatar from '../components/ui/Avatar';
@@ -18,6 +16,8 @@ import { ReviewSection, ThreadSection, EditProtocolModal, DeleteProtocolDialog }
 import { protocolService } from '../api/protocolService';
 import { threadService } from '../api/threadService';
 import { useAppSelector } from '../store/hooks';
+import useRequireAuth from '../hooks/useRequireAuth';
+import GuardedEditDeleteButtons from '../components/auth/GuardedActions';
 import type { Protocol } from '../types/protocol';
 import type { Thread } from '../types/thread';
 import type { ApiError } from '../types/api';
@@ -127,6 +127,7 @@ const ProtocolDetailPage: React.FC = () => {
   // ── Edit/Delete state ──
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { isAuthenticated, open } = useRequireAuth();
 
   // ── Derived ──
   const tags = useMemo(() => protocol?.tags ?? [], [protocol]);
@@ -276,24 +277,13 @@ const ProtocolDetailPage: React.FC = () => {
               </button>
 
               {/* Edit/Delete buttons for owner */}
-              {canManage && (
+               {canManage && (
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setIsEditModalOpen(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors text-sm font-medium cursor-pointer"
-                    aria-label="Edit protocol"
-                  >
-                    <Edit2 size={14} />
-                    <span className="hidden sm:inline">Edit</span>
-                  </button>
-                  <button
-                    onClick={() => setIsDeleteDialogOpen(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/20 text-red-100 hover:bg-red-500/30 transition-colors text-sm font-medium cursor-pointer"
-                    aria-label="Delete protocol"
-                  >
-                    <Trash2 size={14} />
-                    <span className="hidden sm:inline">Delete</span>
-                  </button>
+                  {/* Guard edit/delete so unauthenticated users see login modal */}
+                  <GuardedEditDeleteButtons
+                    onEdit={() => setIsEditModalOpen(true)}
+                    onDelete={() => setIsDeleteDialogOpen(true)}
+                  />
                 </div>
               )}
             </div>
@@ -603,12 +593,14 @@ const ProtocolDetailPage: React.FC = () => {
     </div>
 
     <div className="relative">
-      <textarea
-        id="desktop-thread-composer"
+        <textarea
+          id="desktop-thread-composer"
         placeholder="Ask a question or share an insight with the community…"
         rows={3} // Bounded up for cleaner visual context depth while filling text
-        onKeyDown={async (e) => {
-          if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+         onKeyDown={async (e) => {
+           if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            if (!isAuthenticated) { open(); return; }
+
             const target = e.currentTarget;
             const body = target.value.trim();
             if (!body) return;
@@ -636,6 +628,8 @@ const ProtocolDetailPage: React.FC = () => {
       fullWidth
       className="shadow-sm hover:shadow-md active:scale-[0.99] transition-all"
       onClick={async () => {
+        if (!isAuthenticated) { open(); return; }
+
         const textarea = document.getElementById('desktop-thread-composer') as HTMLTextAreaElement | null;
         const body = textarea?.value.trim();
         if (!body) return;

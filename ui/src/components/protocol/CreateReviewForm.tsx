@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Send } from 'lucide-react';
 import Button from '../ui/Button';
 import { reviewService } from '../../api/reviewService';
+import useRequireAuth from '../../hooks/useRequireAuth';
 import type { Review, CreateReviewRequest } from '../../types/review';
 import type { ApiError } from '../../types/api';
 import StarRating from '../ui/StarRating';
@@ -12,6 +13,7 @@ interface CreateReviewFormProps {
 }
 
 const CreateReviewForm: React.FC<CreateReviewFormProps> = ({ protocolId, onSuccess }) => {
+  const { isAuthenticated, open } = useRequireAuth();
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,6 +23,10 @@ const CreateReviewForm: React.FC<CreateReviewFormProps> = ({ protocolId, onSucce
   const isValid = rating > 0 && feedback.trim().length > 0;
 
   const handleSubmit = async () => {
+    if (!isAuthenticated) {
+      open();
+      return;
+    }
     if (!isValid || isSubmitting) return;
 
     setIsSubmitting(true);

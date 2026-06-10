@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import DesktopSidebar from '../components/layout/DesktopSidebar';
 import { ThreadHeader, CommentStream, CommentComposer } from '../components/threads';
+import useRequireAuth from '../hooks/useRequireAuth';
 import { useAppSelector } from '../store/hooks';
 import { threadService } from '../api/threadService';
 import { commentService } from '../api/commentService';
@@ -54,6 +55,7 @@ const ThreadDetailsPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const currentUserId = useAppSelector((s) => s.auth.user?.id ?? null);
+  const { isAuthenticated, open } = useRequireAuth();
 
   const updateCommentInTree = (items: Comment[], commentId: number, updater: (comment: Comment) => Comment): Comment[] =>
     items.map((item) => {
@@ -178,6 +180,11 @@ const ThreadDetailsPage: React.FC = () => {
 
   // ****Handlers ***********//***─────────
   const handleReply = (commentId: number, authorName: string) => {
+    if (!isAuthenticated) {
+      open();
+      return;
+    }
+
     setReplyTo({ id: commentId, author: authorName });
     setCommentText(`@${authorName} `);
     setTimeout(() => composerRef.current?.focus(), 100);
@@ -189,10 +196,12 @@ const ThreadDetailsPage: React.FC = () => {
   };
 
   const handleEditThread = () => {
+    if (!isAuthenticated) { open(); return; }
     setIsEditing(true);
   };
 
   const handleDeleteThread = async () => {
+    if (!isAuthenticated) { open(); return; }
     if (!id || !protocolIdFromState) return;
     if (!window.confirm('Delete this thread? This action cannot be undone.')) return;
 
@@ -211,6 +220,7 @@ const ThreadDetailsPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    if (!isAuthenticated) { open(); return; }
     if (!commentText.trim() || !id || isSubmitting) return;
 
     setIsSubmitting(true);

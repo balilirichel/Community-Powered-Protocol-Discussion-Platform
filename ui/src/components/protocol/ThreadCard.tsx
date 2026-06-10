@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 import VoteController from '../ui/VoteController';
+import useRequireAuth from '../../hooks/useRequireAuth';
 import { threadService } from '../../api/threadService';
 import Avatar from '../ui/Avatar';
 import type { Thread } from '../../types/thread';
@@ -109,6 +110,17 @@ const ThreadCard: React.FC<ThreadCardProps> = ({ thread, protocolId, compact = f
     }
   };
 
+  const { isAuthenticated, open } = useRequireAuth();
+
+  const guardClick = (fn?: () => void) => (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (isAuthenticated) {
+      fn?.();
+    } else {
+      open();
+    }
+  };
+
   return (
     <div
       role="button"
@@ -150,30 +162,24 @@ const ThreadCard: React.FC<ThreadCardProps> = ({ thread, protocolId, compact = f
 
       {canManage && (onEdit || onDelete) && (
         <div className="flex items-center gap-3 mb-3">
-          {onEdit && (
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                onEdit();
-              }}
-              className="text-xs font-semibold text-[#118451] hover:text-[#065c38] transition-colors"
-            >
-              Edit
-            </button>
-          )}
-          {onDelete && (
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                onDelete();
-              }}
-              className="text-xs font-semibold text-red-500 hover:text-red-600 transition-colors"
-            >
-              Delete
-            </button>
-          )}
+            {onEdit && (
+              <button
+                type="button"
+                onClick={guardClick(onEdit)}
+                className="text-xs font-semibold text-[#118451] hover:text-[#065c38] transition-colors"
+              >
+                Edit
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={guardClick(onDelete)}
+                className="text-xs font-semibold text-red-500 hover:text-red-600 transition-colors"
+              >
+                Delete
+              </button>
+            )}
         </div>
       )}
 

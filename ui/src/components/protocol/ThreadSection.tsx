@@ -4,6 +4,7 @@ import Button from '../ui/Button';
 import ThreadList from './ThreadList';
 import CreateThreadForm from './CreateThreadForm';
 import { useAppSelector } from '../../store/hooks';
+import useRequireAuth from '../../hooks/useRequireAuth';
 import { threadService } from '../../api/threadService';
 import type { Protocol } from '../../types/protocol';
 import type { Thread } from '../../types/thread';
@@ -76,6 +77,7 @@ const ThreadSection: React.FC<ThreadSectionProps> = ({
   const currentUserId = useAppSelector((s) => s.auth.user?.id ?? null);
   const [showModal, setShowModal] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const { isAuthenticated, open } = useRequireAuth();
   const [editingThread, setEditingThread] = useState<Thread | null>(null);
 
   const handleEditThread = (thread: Thread) => {
@@ -223,7 +225,10 @@ const ThreadSection: React.FC<ThreadSectionProps> = ({
           variant={showForm ? 'outline' : 'primary'}
           size="sm"
           icon={<Plus size={14} />}
-          onClick={() => setShowForm((v) => !v)}
+          onClick={() => {
+            if (isAuthenticated) setShowForm((v) => !v);
+            else open();
+          }}
         >
           {showForm ? 'Cancel' : 'New Thread'}
         </Button>

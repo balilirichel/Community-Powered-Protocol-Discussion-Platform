@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import useRequireAuth from '../../hooks/useRequireAuth';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 
 interface VoteControllerProps {
@@ -16,6 +17,7 @@ const VoteController: React.FC<VoteControllerProps> = ({
   onVote,
   size = 'md',
 }) => {
+  const { isAuthenticated, open } = useRequireAuth();
   const [userVote, setUserVote] = useState<1 | -1 | null>(initialUserVote);
   const [upvotes, setUpvotes] = useState(initialUpvotes);
   const [downvotes, setDownvotes] = useState(initialDownvotes);
@@ -33,6 +35,12 @@ const VoteController: React.FC<VoteControllerProps> = ({
   }, [initialDownvotes]);
 
   const handleVote = (direction: 1 | -1) => {
+    // ensure user is authenticated before allowing vote
+    if (!isAuthenticated) {
+      open();
+      return;
+    }
+
     let newVote: 1 | -1 | null = direction;
 
     if (userVote === direction) {

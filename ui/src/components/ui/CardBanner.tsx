@@ -1,10 +1,17 @@
-import { ShieldCheck, MessageSquareCode } from 'lucide-react';
+import { ShieldCheck, MessageSquareCode, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
+
 export default function CardBanner() {
     return (
-        <Link to="/">
+        <Link
+            to="/"
+            title="Back to Home"
+            className="group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#118451]/40 rounded-xl"
+        >
             <div className="w-full flex justify-center mb-6">
-                <div className="w-full max-w-[400px] flex items-center justify-center gap-3 py-1.5 px-2">
+                <div className="w-full max-w-[400px] flex items-center justify-center gap-3 py-1.5 px-2
+                                rounded-xl transition-colors duration-150
+                                group-hover:bg-[#118451]/5 active:bg-[#118451]/10">
 
                     {/* Minimalist Branded Icon Configuration */}
                     <div className="relative flex-shrink-0 flex items-center justify-center">
@@ -25,6 +32,15 @@ export default function CardBanner() {
                             &amp; Discussion Platform
                         </p>
                     </div>
+
+                    {/* ← Always-visible home pill, works on touch & desktop */}
+                    <span className="ml-auto inline-flex items-center gap-1 px-2 py-1
+                                     bg-[#118451]/7 rounded-full
+                                     text-[11px] font-semibold text-[#118451]
+                                     whitespace-nowrap flex-shrink-0">
+                        <Home className="h-3 w-3 stroke-[2]" />
+                        Home
+                    </span>
 
                 </div>
             </div>

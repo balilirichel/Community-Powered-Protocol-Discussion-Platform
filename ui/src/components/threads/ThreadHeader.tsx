@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, MessageSquare, Edit2, Trash2 } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 import Button from '../ui/Button';
+import useRequireAuth from '../../hooks/useRequireAuth';
 import VoteController from '../ui/VoteController';
 import type { Thread } from '../../types/thread';
 import { threadService } from '../../api/threadService';
@@ -57,6 +58,13 @@ const ThreadHeader: React.FC<ThreadHeaderProps> = ({ thread, canManage = false, 
     }
   };
 
+  const { isAuthenticated, open } = useRequireAuth();
+
+  const guard = (fn?: () => void) => () => {
+    if (isAuthenticated) return fn?.();
+    open();
+  };
+
   return (
     <header
       id="thread-header"
@@ -102,24 +110,24 @@ const ThreadHeader: React.FC<ThreadHeaderProps> = ({ thread, canManage = false, 
         {canManage && (
           <div className="flex items-center gap-2 flex-shrink-0">
             {onEdit && (
-              <Button
-                variant="outline"
-                size="sm"
-                icon={<Edit2 size={14} />}
-                onClick={onEdit}
-              >
-                Edit
-              </Button>
-            )}
+               <Button
+                 variant="outline"
+                 size="sm"
+                 icon={<Edit2 size={14} />}
+                 onClick={guard(onEdit)}
+               >
+                 Edit
+               </Button>
+             )}
             {onDelete && (
-              <Button
-                variant="ghost"
-                size="sm"
-                icon={<Trash2 size={14} />}
-                onClick={onDelete}
-              >
-                Delete
-              </Button>
+               <Button
+                 variant="ghost"
+                 size="sm"
+                 icon={<Trash2 size={14} />}
+                 onClick={guard(onDelete)}
+               >
+                 Delete
+               </Button>
             )}
           </div>
         )}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { CornerDownRight, MoreHorizontal, ChevronDown } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 import VoteController from '../ui/VoteController';
+import useRequireAuth from '../../hooks/useRequireAuth';
 import type { Comment } from '../../types/comment';
 import { commentService } from '../../api/commentService';
 
@@ -95,7 +96,13 @@ const CommentItem: React.FC<CommentItemProps> = ({
     }
   };
 
+  const { isAuthenticated, open } = useRequireAuth();
+
   const handleDelete = async () => {
+    if (!isAuthenticated) {
+      open();
+      return;
+    }
     if (actionLoading || !comment.id) return;
     if (!window.confirm('Delete this comment? This action cannot be undone.')) return;
 
@@ -288,10 +295,16 @@ const CommentItem: React.FC<CommentItemProps> = ({
               }
             }}
           />
-          <button
-            onClick={() => onReply?.(comment.id, authorName)}
-            className="flex items-center gap-1 text-xs text-gray-400 hover:text-[#118451] cursor-pointer transition-colors font-medium"
-          >
+           <button
+             onClick={() => {
+               if (isAuthenticated) {
+                 onReply?.(comment.id, authorName);
+               } else {
+                 open();
+               }
+             }}
+             className="flex items-center gap-1 text-xs text-gray-400 hover:text-[#118451] cursor-pointer transition-colors font-medium"
+           >
             <CornerDownRight size={12} />
             Reply
           </button>

@@ -5,6 +5,7 @@ import StarRating from '../ui/StarRating';
 import CreateReviewForm from './CreateReviewForm';
 import ReviewList from './ReviewList';
 import { useAppSelector } from '../../store/hooks';
+import useRequireAuth from '../../hooks/useRequireAuth';
 import { reviewService } from '../../api/reviewService';
 import type { Protocol } from '../../types/protocol';
 import type { Review } from '../../types/review';
@@ -17,6 +18,7 @@ interface ReviewSectionProps {
 }
 
 const ReviewSection: React.FC<ReviewSectionProps> = ({ protocol, onReviewAdded }) => {
+  const { isAuthenticated, open } = useRequireAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -216,7 +218,13 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ protocol, onReviewAdded }
           variant={showForm ? 'outline' : 'primary'}
           size="sm"
           icon={<Plus size={14} />}
-          onClick={() => setShowForm((value) => !value)}
+          onClick={() => {
+            if (isAuthenticated) {
+              setShowForm((value) => !value);
+            } else {
+              open();
+            }
+          }}
         >
           {showForm ? 'Cancel' : 'New Review'}
         </Button>

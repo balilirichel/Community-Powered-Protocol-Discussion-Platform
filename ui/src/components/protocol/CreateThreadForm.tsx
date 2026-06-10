@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Send } from 'lucide-react';
 import Button from '../ui/Button';
 import { threadService } from '../../api/threadService';
+import useRequireAuth from '../../hooks/useRequireAuth';
 import type { Thread, CreateThreadRequest } from '../../types/thread';
 import type { ApiError } from '../../types/api';
 
@@ -17,6 +18,7 @@ const CreateThreadForm: React.FC<CreateThreadFormProps> = ({
   onSuccess,
   compact = false,
 }) => {
+  const { isAuthenticated, open } = useRequireAuth();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,6 +30,7 @@ const CreateThreadForm: React.FC<CreateThreadFormProps> = ({
     : title.trim().length > 0 && body.trim().length > 0;
 
   const handleSubmit = async () => {
+    if (!isAuthenticated) { open(); return; }
     if (!isValid || isSubmitting) return;
 
     setIsSubmitting(true);
