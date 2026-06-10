@@ -16,8 +16,9 @@ nginx -g 'daemon off;' &
 # php artisan protocols:recalculate-ratings
 
 echo "Indexing Typesense..."
-php artisan scout:import 'App\Models\Protocol'
-php artisan scout:import 'App\Models\Thread'
+# php artisan scout:import 'App\Models\Protocol'
+# php artisan scout:import 'App\Models\Thread'
+php artisan typesense:reindex
 
 echo "Done!"
 wait
