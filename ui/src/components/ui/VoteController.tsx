@@ -1,47 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 
 interface VoteControllerProps {
-  initialVotes?: number;
+  initialUpvotes?: number;
+  initialDownvotes?: number;
   userVote?: 1 | -1 | null;
   onVote?: (vote: 1 | -1 | null) => void;
   size?: 'sm' | 'md';
 }
 
 const VoteController: React.FC<VoteControllerProps> = ({
-  initialVotes = 0,
+  initialUpvotes = 0,
+  initialDownvotes = 0,
   userVote: initialUserVote = null,
   onVote,
   size = 'md',
 }) => {
   const [userVote, setUserVote] = useState<1 | -1 | null>(initialUserVote);
-  const [votes, setVotes] = useState(initialVotes);
+  const [upvotes, setUpvotes] = useState(initialUpvotes);
+  const [downvotes, setDownvotes] = useState(initialDownvotes);
 
-  // Keep internal state in sync when parent updates props (controlled-mode support)
-  React.useEffect(() => {
+  useEffect(() => {
     setUserVote(initialUserVote);
   }, [initialUserVote]);
 
-  React.useEffect(() => {
-    setVotes(initialVotes);
-  }, [initialVotes]);
+  useEffect(() => {
+    setUpvotes(initialUpvotes);
+  }, [initialUpvotes]);
+
+  useEffect(() => {
+    setDownvotes(initialDownvotes);
+  }, [initialDownvotes]);
 
   const handleVote = (direction: 1 | -1) => {
-    let newVote: 1 | -1 | null;
-    let delta = 0;
+    let newVote: 1 | -1 | null = direction;
 
     if (userVote === direction) {
-      // Toggle off
       newVote = null;
-      delta = -direction;
-    } else {
-      // New vote or switching
-      delta = userVote ? direction * 2 : direction;
-      newVote = direction;
     }
 
     setUserVote(newVote);
-    setVotes((v) => v + delta);
+
+    if (userVote === direction) {
+      if (direction === 1) {
+        setUpvotes((prev) => Math.max(prev - 1, 0));
+      } else {
+        setDownvotes((prev) => Math.max(prev - 1, 0));
+      }
+    } else if (userVote === null) {
+      if (direction === 1) {
+        setUpvotes((prev) => prev + 1);
+      } else {
+        setDownvotes((prev) => prev + 1);
+      }
+    } else {
+      if (direction === 1) {
+        setUpvotes((prev) => prev + 1);
+        setDownvotes((prev) => Math.max(prev - 1, 0));
+      } else {
+        setDownvotes((prev) => prev + 1);
+        setUpvotes((prev) => Math.max(prev - 1, 0));
+      }
+    }
+
     onVote?.(newVote);
   };
 
@@ -74,7 +95,7 @@ const VoteController: React.FC<VoteControllerProps> = ({
         ].join(' ')}
       >
         <ArrowUp size={iconSize} strokeWidth={isUpActive ? 2.5 : 2} />
-        <span className="font-semibold tabular-nums">{votes}</span>
+        <span className="font-semibold tabular-nums">{upvotes}</span>
       </button>
 
       <div className="w-px h-5 bg-gray-200" />
@@ -91,6 +112,7 @@ const VoteController: React.FC<VoteControllerProps> = ({
         ].join(' ')}
       >
         <ArrowDown size={iconSize} strokeWidth={isDownActive ? 2.5 : 2} />
+        <span className="font-semibold tabular-nums">{downvotes}</span>
       </button>
     </div>
   );

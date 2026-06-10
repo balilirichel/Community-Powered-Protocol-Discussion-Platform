@@ -34,6 +34,9 @@ export const threadService = {
       .delete<void>(`/protocols/${protocol}/threads/${thread}`)
       .then((r) => r.data),
 
+  vote: (thread: number | string, data: VoteRequest) =>
+    apiClient.post<void>(`/threads/${thread}/vote`, data).then((r) => r.data),
+
   upvote: (thread: number | string, data: VoteRequest) =>
     apiClient.post<void>(`/threads/${thread}/vote`, data).then((r) => r.data),
 

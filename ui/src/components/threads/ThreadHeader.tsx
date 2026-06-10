@@ -38,11 +38,13 @@ const ThreadHeader: React.FC<ThreadHeaderProps> = ({ thread, canManage = false, 
   const navigate = useNavigate();
 
   const upvotes = thread.upvotes_count ?? 0;
+  const downvotes = thread.downvotes_count ?? 0;
   const commentsCount = thread.comments_count ?? 0;
   const authorName = thread.user?.name ?? thread.author?.name ?? 'Unknown';
   const protocolTitle = thread.protocol?.title ?? '';
 
-  const [votes, setVotes] = useState<number>(upvotes);
+  const [upvoteCount, setUpvoteCount] = useState<number>(upvotes);
+  const [downvoteCount, setDownvoteCount] = useState<number>(downvotes);
   const [userVote, setUserVote] = useState<1 | -1 | null>(() => {
     const raw = (thread as any).user_vote ?? (thread as any).vote ?? null;
     return typeof raw === 'number' ? (raw as 1 | -1) : null;
@@ -148,52 +150,76 @@ const ThreadHeader: React.FC<ThreadHeaderProps> = ({ thread, canManage = false, 
         {/* Action metrics toolbar panel */}
         <div className="flex items-center gap-4 pt-3 border-t border-gray-100">
           <VoteController
-            initialVotes={votes}
+            initialUpvotes={upvoteCount}
+            initialDownvotes={downvoteCount}
             userVote={userVote}
             size="sm"
             onVote={async (newVote) => {
               if (!thread.id || loading) return;
 
-              const prevVotes = votes;
+              const prevUpvotes = upvoteCount;
+              const prevDownvotes = downvoteCount;
               const prevUser = userVote;
 
-              // compute new votes count based on previous and new user vote
-              const computeNewVotes = (
-                prev: 1 | -1 | null,
-                next: 1 | -1 | null,
-                base: number,
-              ) => {
-                if (prev === next) return base;
-                if (prev === null && next !== null) return base + next;
-                if (prev !== null && next === null) return base - prev;
-                if (prev !== null && next !== null) return base - prev + next;
-                return base;
+              const nextCounts = () => {
+                if (prevUser === newVote) {
+                  return {
+                    upvotes: prevUpvotes,
+                    downvotes: prevDownvotes,
+                  };
+                }
+
+                if (prevUser === null && newVote === 1) {
+                  return { upvotes: prevUpvotes + 1, downvotes: prevDownvotes };
+                }
+
+                if (prevUser === null && newVote === -1) {
+                  return { upvotes: prevUpvotes, downvotes: prevDownvotes + 1 };
+                }
+
+                if (prevUser === 1 && newVote === null) {
+                  return { upvotes: prevUpvotes - 1, downvotes: prevDownvotes };
+                }
+
+                if (prevUser === -1 && newVote === null) {
+                  return { upvotes: prevUpvotes, downvotes: prevDownvotes - 1 };
+                }
+
+                if (prevUser === 1 && newVote === -1) {
+                  return { upvotes: prevUpvotes - 1, downvotes: prevDownvotes + 1 };
+                }
+
+                if (prevUser === -1 && newVote === 1) {
+                  return { upvotes: prevUpvotes + 1, downvotes: prevDownvotes - 1 };
+                }
+
+                return { upvotes: prevUpvotes, downvotes: prevDownvotes };
               };
 
-              const newVotes = computeNewVotes(prevUser, newVote, prevVotes);
-              setVotes(newVotes);
+              const { upvotes: nextUpvotes, downvotes: nextDownvotes } = nextCounts();
+              setUpvoteCount(nextUpvotes);
+              setDownvoteCount(nextDownvotes);
               setUserVote(newVote);
               setLoading(true);
 
               try {
-                if (newVote === 1) {
-                  await threadService.upvote(thread.id, { vote: 1 });
-                } else {
+                if (newVote === null) {
                   await threadService.removeVote(thread.id);
+                } else {
+                  await threadService.vote(thread.id, { vote: newVote });
                 }
 
-                // refresh authoritative counts from API
                 if (thread.protocol?.id) {
                   const fresh = await threadService.get(thread.protocol.id, thread.id);
-                  setVotes(fresh.upvotes_count ?? fresh.upvotes_count ?? newVotes);
+                  setUpvoteCount(fresh.upvotes_count ?? nextUpvotes);
+                  setDownvoteCount(fresh.downvotes_count ?? nextDownvotes);
                   const raw = (fresh as any).user_vote ?? (fresh as any).vote ?? null;
                   setUserVote(typeof raw === 'number' ? (raw as 1 | -1) : newVote);
                 }
               } catch (err) {
-                // revert optimistic update on error
-                setVotes(prevVotes);
+                setUpvoteCount(prevUpvotes);
+                setDownvoteCount(prevDownvotes);
                 setUserVote(prevUser);
-                // surface error minimally
                 // eslint-disable-next-line no-alert
                 alert('Vote failed. Please try again.');
               } finally {

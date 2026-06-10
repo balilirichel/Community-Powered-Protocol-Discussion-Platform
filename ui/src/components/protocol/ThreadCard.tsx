@@ -110,7 +110,7 @@ const ThreadCard: React.FC<ThreadCardProps> = ({ thread, protocolId, compact = f
         <div className="flex items-center gap-1 text-gray-400">
           <MessageSquare size={12} />
           <span className="text-xs font-medium text-gray-500">
-            {thread.comments_count ?? 0}
+            {thread.comments_count ?? 0} Threads
           </span>
         </div>
         {(thread.upvotes_count ?? 0) > 0 && (

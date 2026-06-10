@@ -59,8 +59,10 @@ const CommentItem: React.FC<CommentItemProps> = ({
   // const isAtDepthLimit = level >= maxDepth - 1;
 
   const upvotes = comment.upvotes_count ?? 0;
+  const downvotes = comment.downvotes_count ?? 0;
   const authorName = comment.author?.name ?? 'Unknown';
-  const [votes, setVotes] = useState<number>(upvotes);
+  const [upvoteCount, setUpvoteCount] = useState<number>(upvotes);
+  const [downvoteCount, setDownvoteCount] = useState<number>(downvotes);
   const [userVote, setUserVote] = useState<1 | -1 | null>(() => {
     const raw = (comment as any).user_vote ?? (comment as any).vote ?? null;
     return typeof raw === 'number' ? (raw as 1 | -1) : null;
@@ -217,40 +219,67 @@ const CommentItem: React.FC<CommentItemProps> = ({
         {/* Actions */}
         <div className="flex items-center gap-3">
           <VoteController
-            initialVotes={votes}
+            initialUpvotes={upvoteCount}
+            initialDownvotes={downvoteCount}
             userVote={userVote}
             size="sm"
             onVote={async (newVote) => {
               if (!comment.id || loading) return;
 
-              const prevVotes = votes;
+              const prevUpvotes = upvoteCount;
+              const prevDownvotes = downvoteCount;
               const prevUser = userVote;
 
-              const computeNewVotes = (
-                prev: 1 | -1 | null,
-                next: 1 | -1 | null,
-                base: number,
-              ) => {
-                if (prev === next) return base;
-                if (prev === null && next !== null) return base + next;
-                if (prev !== null && next === null) return base - prev;
-                if (prev !== null && next !== null) return base - prev + next;
-                return base;
+              const nextCounts = () => {
+                if (prevUser === newVote) {
+                  return {
+                    upvotes: prevUpvotes,
+                    downvotes: prevDownvotes,
+                  };
+                }
+
+                if (prevUser === null && newVote === 1) {
+                  return { upvotes: prevUpvotes + 1, downvotes: prevDownvotes };
+                }
+
+                if (prevUser === null && newVote === -1) {
+                  return { upvotes: prevUpvotes, downvotes: prevDownvotes + 1 };
+                }
+
+                if (prevUser === 1 && newVote === null) {
+                  return { upvotes: prevUpvotes - 1, downvotes: prevDownvotes };
+                }
+
+                if (prevUser === -1 && newVote === null) {
+                  return { upvotes: prevUpvotes, downvotes: prevDownvotes - 1 };
+                }
+
+                if (prevUser === 1 && newVote === -1) {
+                  return { upvotes: prevUpvotes - 1, downvotes: prevDownvotes + 1 };
+                }
+
+                if (prevUser === -1 && newVote === 1) {
+                  return { upvotes: prevUpvotes + 1, downvotes: prevDownvotes - 1 };
+                }
+
+                return { upvotes: prevUpvotes, downvotes: prevDownvotes };
               };
 
-              const newVotes = computeNewVotes(prevUser, newVote, prevVotes);
-              setVotes(newVotes);
+              const { upvotes: nextUpvotes, downvotes: nextDownvotes } = nextCounts();
+              setUpvoteCount(nextUpvotes);
+              setDownvoteCount(nextDownvotes);
               setUserVote(newVote);
               setLoading(true);
 
               try {
-                if (newVote === 1) {
-                  await commentService.upvote(comment.id, { vote: 1 });
-                } else {
+                if (newVote === null) {
                   await commentService.removeVote(comment.id);
+                } else {
+                  await commentService.vote(comment.id, { vote: newVote });
                 }
               } catch (err) {
-                setVotes(prevVotes);
+                setUpvoteCount(prevUpvotes);
+                setDownvoteCount(prevDownvotes);
                 setUserVote(prevUser);
                 // eslint-disable-next-line no-alert
                 alert('Vote failed. Please try again.');

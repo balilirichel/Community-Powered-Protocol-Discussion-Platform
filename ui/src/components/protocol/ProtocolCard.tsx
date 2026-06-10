@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Star, BookOpen } from 'lucide-react';
+import {  Star, BookOpen } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 
 interface ProtocolCardProps {
@@ -36,7 +36,7 @@ const ProtocolCard: React.FC<ProtocolCardProps> = ({
   category,
   rating,
   reviews,
-  comments,
+  //comments,
   // upvotes,
   steps,
   gradientIndex = 0,
@@ -95,7 +95,7 @@ const ProtocolCard: React.FC<ProtocolCardProps> = ({
             <span className="text-xs text-gray-400 tabular-nums">({reviews})</span>
           </div>
 
-          <div className="w-px h-3 bg-gray-200" />
+          {/* <div className="w-px h-3 bg-gray-200" /> */}
 
           {/* Comments chip */}
           {/* <div className="flex items-center gap-1 text-gray-400">
@@ -103,7 +103,7 @@ const ProtocolCard: React.FC<ProtocolCardProps> = ({
             <span className="text-xs font-medium text-gray-600 tabular-nums">{comments}</span>
           </div> */}
 
-          <div className="w-px h-3 bg-gray-200" />
+          {/* <div className="w-px h-3 bg-gray-200" /> */}
 
        
         </div>

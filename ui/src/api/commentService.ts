@@ -34,6 +34,9 @@ export const commentService = {
       .delete<void>(`/threads/${thread}/comments/${comment}`)
       .then((r) => r.data),
 
+  vote: (comment: number | string, data: VoteRequest) =>
+    apiClient.post<void>(`/comments/${comment}/vote`, data).then((r) => r.data),
+
   upvote: (comment: number | string, data: VoteRequest) =>
     apiClient.post<void>(`/comments/${comment}/vote`, data).then((r) => r.data),
 
