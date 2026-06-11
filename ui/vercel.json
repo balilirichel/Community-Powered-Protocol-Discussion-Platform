@@ -1,3 +1,10 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "version": 2,
+  "routes": [
+    { "handle": "filesystem" },
+    // Preserve API calls (if you proxy API to a separate server or serverless function)
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    // All other requests should serve the SPA index so React Router handles client-side routes
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
 }
