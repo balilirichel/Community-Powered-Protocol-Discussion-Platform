@@ -11,19 +11,23 @@ use Illuminate\Http\Request;
 class SearchController extends Controller
 {
     /**
-     * Search Protocols via Typesense.
+     * Search Protocols — pure Eloquent, no Typesense dependency.
      *
-     * Route   : GET /api/search/protocols
-     * Auth    : auth:sanctum (required)
+     * Route   : GET /api/v1/search/protocols
+     * Auth    : public
      *
      * Query params:
-     *   q      — search string; use '*' or omit for match-all (search-as-you-type)
-     *   filter — ranking/sort mode:
-     *              recent   (default) → sort by created_at desc
-     *              reviewed           → sort by reviews_count desc
-     *              rated              → sort by rating desc
-     *              upvoted            → sort by votes desc
+     *   q        — search string; '*' or blank = match-all
+     *   filter   — sort/rank mode:
+     *                recent   (default) → created_at desc
+     *                reviewed           → reviews_count desc
+     *                rated              → rating desc
+     *                upvoted            → votes_sum_value desc
      *   per_page — results per page (default 15)
+     *
+     * Previously used Protocol::search() (Laravel Scout / Typesense).
+     * Replaced with Eloquent so this endpoint works when Typesense is
+     * unavailable — it is the true database-backed fallback for the frontend.
      */
     public function protocols(Request $request): JsonResponse
     {
@@ -31,16 +35,25 @@ class SearchController extends Controller
         $filter  = $request->input('filter', 'recent');
         $perPage = (int) $request->input('per_page', 15);
 
-        $sortBy = match ($filter) {
-            'reviewed' => 'reviews_count:desc',
-            'rated'    => 'rating:desc',
-            'upvoted'  => 'votes:desc',
-            default    => 'created_at:desc',   // 'recent'
+        $builder = Protocol::query()
+            ->with('user')
+            ->withCount('reviews')
+            ->withSum('votes', 'value');
+
+        // '*' (Typesense match-all wildcard) and blank both mean: no WHERE filter.
+        if ($query !== '*' && $query !== '') {
+            $builder->where('title', 'like', '%' . $query . '%');
+        }
+
+        // votes_sum_value is the alias produced by withSum('votes', 'value').
+        match ($filter) {
+            'reviewed' => $builder->orderByDesc('reviews_count'),
+            'rated'    => $builder->orderByDesc('rating'),
+            'upvoted'  => $builder->orderByDesc('votes_sum_value'),
+            default    => $builder->orderByDesc('created_at'),   // 'recent'
         };
 
-        $results = Protocol::search($query)
-            ->options(['sort_by' => $sortBy])
-            ->paginate($perPage);
+        $results = $builder->paginate($perPage);
 
         return response()->json([
             'data'  => $results->items(),
@@ -56,21 +69,23 @@ class SearchController extends Controller
     }
 
     /**
-     * Search Threads via Typesense.
+     * Search Threads — pure Eloquent, no Typesense dependency.
      *
-     * Route   : GET /api/search/threads
-     * Auth    : auth:sanctum (required)
+     * Route   : GET /api/v1/search/threads
+     * Auth    : public
      *
      * Query params:
-     *   q      — search string; use '*' or omit for match-all (search-as-you-type)
-     *   filter — ranking/sort mode:
-     *              recent   (default) → sort by created_at desc
-     *              reviewed           → sort by comments_count desc
-     *                                   (threads have comments, not reviews)
-     *              rated              → threads have no rating field;
-     *                                   falls back to votes:desc with a note
-     *              upvoted            → sort by votes desc
+     *   q        — search string; '*' or blank = match-all
+     *   filter   — sort/rank mode:
+     *                recent   (default) → created_at desc
+     *                reviewed           → comments_count desc
+     *                rated              → no rating field; falls back to votes
+     *                upvoted            → votes_sum_value desc
      *   per_page — results per page (default 15)
+     *
+     * Previously used Thread::search() (Laravel Scout / Typesense).
+     * Replaced with Eloquent so this endpoint works when Typesense is
+     * unavailable — it is the true database-backed fallback for the frontend.
      */
     public function threads(Request $request): JsonResponse
     {
@@ -80,19 +95,30 @@ class SearchController extends Controller
 
         $note = null;
 
-        $sortBy = match ($filter) {
-            'reviewed' => 'comments_count:desc',
-            'rated'    => (function () use (&$note) {
+        $builder = Thread::query()
+            ->with(['user', 'protocol'])
+            ->withCount('comments')
+            ->withSum('votes', 'value');
+
+        // LIKE on title OR body when a real search string is given.
+        if ($query !== '*' && $query !== '') {
+            $builder->where(function ($q) use ($query) {
+                $q->where('title', 'like', '%' . $query . '%')
+                  ->orWhere('body',  'like', '%' . $query . '%');
+            });
+        }
+
+        match ($filter) {
+            'reviewed' => $builder->orderByDesc('comments_count'),
+            'rated'    => (function () use ($builder, &$note) {
                 $note = "'rated' is not applicable to threads (no rating field); sorting by votes instead.";
-                return 'votes:desc';
+                $builder->orderByDesc('votes_sum_value');
             })(),
-            'upvoted'  => 'votes:desc',
-            default    => 'created_at:desc',   // 'recent'
+            'upvoted'  => $builder->orderByDesc('votes_sum_value'),
+            default    => $builder->orderByDesc('created_at'),   // 'recent'
         };
 
-        $results = Thread::search($query)
-            ->options(['sort_by' => $sortBy])
-            ->paginate($perPage);
+        $results = $builder->paginate($perPage);
 
         $response = [
             'data'  => $results->items(),
@@ -114,16 +140,13 @@ class SearchController extends Controller
     }
 
     /**
-     * Trigger a full reindex of all searchable models.
+     * Trigger a full reindex of all searchable models into Typesense.
      *
-     * Route : POST /api/search/reindex
+     * Route : POST /api/v1/search/reindex
      * Auth  : auth:sanctum (required)
      *
      * Optional body param:
      *   model — 'protocol' | 'thread' (omit to reindex both)
-     *
-     * Runs synchronously. For large datasets, consider dispatching a
-     * queued job and returning a 202 Accepted instead.
      */
     public function reindex(Request $request): JsonResponse
     {
@@ -143,7 +166,6 @@ class SearchController extends Controller
         foreach ($targets as $modelClass) {
             $shortName = class_basename($modelClass);
 
-            // Flush existing Typesense collection data, then reimport
             $modelClass::removeAllFromSearch();
             $modelClass::makeAllSearchable();
 

@@ -14,12 +14,21 @@ export interface SearchHit<T> {
   text_match: number;
 }
 
+/**
+ * Shape returned by SearchController::protocols() and SearchController::threads().
+ * NOTE: This intentionally differs from the Typesense client response shape.
+ *   - data  → T[] (full Protocol / Thread REST objects from $results->items())
+ *   - meta  → Laravel paginator fields
+ */
 export interface SearchResponse<T> {
   data: T[];
   meta: {
-    found: number;
-    out_of: number;
-    page: number;
-    search_time_ms: number;
+    current_page: number;
+    per_page: number;
+    total: number;
+    last_page: number;
   };
+  filter: string;
+  query: string;
+  note?: string;
 }
