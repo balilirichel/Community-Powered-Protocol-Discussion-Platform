@@ -1,59 +1,85 @@
 <?php
 
 return [
+    /*
+    |--------------------------------------------------------------------------
+    | ChromaDB Connection Settings
+    |--------------------------------------------------------------------------
+    */
+
+    'token' => env('CHROMADB_TOKEN'),
+    'host' => env('CHROMADB_HOST', 'http://localhost'),
+    'port' => env('CHROMADB_PORT', '8001'),
 
     /*
     |--------------------------------------------------------------------------
-    | ChromaDB Connection
+    | Tenant & Database Configuration
     |--------------------------------------------------------------------------
     |
-    | Host and port for the ChromaDB HTTP server. Set these in your .env
-    | file. Works with local Docker, a remote server, or Chroma Cloud.
+    | ChromaDB supports multi-tenancy through tenants and databases:
+    |
+    | TENANT: Top-level isolation boundary. Use cases:
+    |   - Multi-tenant SaaS: Each customer gets their own tenant
+    |   - Complete data isolation between organizations
+    |   - Different access control policies per tenant
+    |
+    | DATABASE: Logical grouping within a tenant. Use cases:
+    |   - Environment separation: 'production', 'staging', 'development'
+    |   - Project organization: Different databases for different projects
+    |   - Feature-based separation: 'main', 'experimental', 'archive'
+    |
+    | Default values work for most single-tenant applications.
+    | For multi-tenant apps, use Chromadb::client()->withTenant($tenant)
+    | For multiple databases, use Chromadb::client()->withDatabase($database)
     |
     */
 
-    'base_url' => env('CHROMADB_BASE_URL', 'http://localhost:8000'),
-
-    'timeout' => (int) env('CHROMADB_TIMEOUT', 5),
-
-    'api_key' => env('CHROMADB_API_KEY'),
+    'tenant' => env('CHROMADB_TENANT', 'default_tenant'),
+    'database' => env('CHROMADB_DATABASE', 'default_database'),
 
     /*
     |--------------------------------------------------------------------------
-    | Collection
+    | Embedding Configuration
     |--------------------------------------------------------------------------
     |
-    | The ChromaDB collection used to store PDF document chunks.
+    | Configure embedding function providers for automatic embedding generation.
+    | Supported providers: openai, voyage, mistral, jina, ollama
     |
     */
 
-    'collection' => env('CHROMADB_COLLECTION', 'pdf_documents'),
+    'embeddings' => [
+        'default' => env('CHROMADB_EMBEDDING_PROVIDER', 'openai'),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Retrieval
-    |--------------------------------------------------------------------------
-    |
-    | How many PDF chunks to retrieve per query. This is additive to the
-    | existing knowledge-base entry retrieval — both are sent to Gemini.
-    |
-    */
+        'providers' => [
+            'openai' => [
+                'api_key' => env('OPENAI_API_KEY'),
+                'model' => env('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small'),
+                'dimensions' => env('OPENAI_EMBEDDING_DIMENSIONS', null),
+                'organization' => env('OPENAI_ORGANIZATION', null),
+            ],
 
-    'top_k' => (int) env('CHROMADB_TOP_K', 5),
+            'voyage' => [
+                'api_key' => env('VOYAGE_API_KEY'),
+                'model' => env('VOYAGE_EMBEDDING_MODEL', 'voyage-3.5'),
+                'input_type' => env('VOYAGE_INPUT_TYPE', 'document'),
+            ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Chunking
-    |--------------------------------------------------------------------------
-    |
-    | Controls how PDF text is split before embedding. Tune these based on
-    | your PDF content: technical docs may benefit from larger chunks,
-    | conversational content from smaller ones.
-    |
-    */
+            'mistral' => [
+                'api_key' => env('MISTRAL_API_KEY'),
+                'model' => env('MISTRAL_EMBEDDING_MODEL', 'mistral-embed'),
+            ],
 
-    'chunk_size' => (int) env('CHROMADB_CHUNK_SIZE', 500),
+            'jina' => [
+                'api_key' => env('JINA_API_KEY'),
+                'model' => env('JINA_EMBEDDING_MODEL', 'jina-embeddings-v3'),
+                'task' => env('JINA_TASK', null), // e.g., 'retrieval.query', 'retrieval.passage', 'text-matching'
+                'dimensions' => env('JINA_EMBEDDING_DIMENSIONS', null),
+            ],
 
-    'chunk_overlap' => (int) env('CHROMADB_CHUNK_OVERLAP', 50),
-
+            'ollama' => [
+                'base_url' => env('OLLAMA_BASE_URL', 'http://localhost:11434'),
+                'model' => env('OLLAMA_EMBEDDING_MODEL', 'all-minilm'),
+            ],
+        ],
+    ],
 ];

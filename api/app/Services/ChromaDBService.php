@@ -2,23 +2,16 @@
 
 namespace App\Services;
 
-use Illuminate\Http\Client\Response;
-use Illuminate\Support\Facades\Http;
+use HelgeSverre\Chromadb\Chromadb;
 use Illuminate\Support\Facades\Log;
 
 class ChromaDBService
 {
-    private string $baseUrl;
+    private Chromadb $client;
 
-    private int $timeout;
-
-    private ?string $apiKey;
-
-    public function __construct()
+    public function __construct(Chromadb $client)
     {
-        $this->baseUrl = rtrim(config('chromadb.base_url', 'http://localhost:8000'), '/');
-        $this->timeout = config('chromadb.timeout', 5);
-        $this->apiKey = config('chromadb.api_key');
+        $this->client = $client;
     }
 
     /**
@@ -27,23 +20,25 @@ class ChromaDBService
     public function getOrCreateCollection(string $name): ?string
     {
         try {
-            $response = $this->request('POST', '/api/v1/collections', [
-                'name' => $name,
-                'get_or_create' => true,
-            ]);
+            // Verified against vendor/helgesverre/chromadb/src/Resources/Collections.php:55-62
+            $response = $this->client->collections()->create(
+                name: $name,
+                getOrCreate: true,
+            );
 
             if ($response->successful()) {
                 return $response->json('id');
             }
 
-            Log::error('ChromaDB get_or_create_collection failed', [
+            Log::error('ChromaDB getOrCreateCollection failed', [
+                'name' => $name,
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
 
             return null;
         } catch (\Exception $e) {
-            Log::error('ChromaDB get_or_create_collection exception', [
+            Log::error('ChromaDB getOrCreateCollection exception', [
                 'message' => $e->getMessage(),
             ]);
 
@@ -67,12 +62,14 @@ class ChromaDBService
         array $metadatas,
     ): bool {
         try {
-            $response = $this->request('POST', "/api/v1/collections/{$collectionId}/add", [
-                'ids' => $ids,
-                'embeddings' => $embeddings,
-                'documents' => $documents,
-                'metadatas' => $metadatas,
-            ]);
+            // Verified against vendor/helgesverre/chromadb/src/Resources/Items.php:31-38
+            $response = $this->client->items()->add(
+                collectionId: $collectionId,
+                ids: $ids,
+                embeddings: $embeddings,
+                documents: $documents,
+                metadatas: $metadatas,
+            );
 
             if ($response->successful()) {
                 return true;
@@ -103,11 +100,13 @@ class ChromaDBService
     public function queryCollection(string $collectionId, array $queryEmbedding, int $nResults): ?array
     {
         try {
-            $response = $this->request('POST', "/api/v1/collections/{$collectionId}/query", [
-                'query_embeddings' => [$queryEmbedding],
-                'n_results' => $nResults,
-                'include' => ['documents', 'metadatas', 'distances'],
-            ]);
+            // Verified against vendor/helgesverre/chromadb/src/Resources/Items.php:205-215
+            $response = $this->client->items()->query(
+                collectionId: $collectionId,
+                queryEmbeddings: [$queryEmbedding],
+                nResults: $nResults,
+                include: ['documents', 'metadatas', 'distances'],
+            );
 
             if ($response->successful()) {
                 return $response->json();
@@ -137,9 +136,11 @@ class ChromaDBService
     public function deleteByMetadata(string $collectionId, array $where): bool
     {
         try {
-            $response = $this->request('POST', "/api/v1/collections/{$collectionId}/delete", [
-                'where' => $where,
-            ]);
+            // Verified against vendor/helgesverre/chromadb/src/Resources/Items.php:156-161
+            $response = $this->client->items()->delete(
+                collectionId: $collectionId,
+                where: $where,
+            );
 
             return $response->successful();
         } catch (\Exception $e) {
@@ -150,21 +151,5 @@ class ChromaDBService
 
             return false;
         }
-    }
-
-    /**
-     * Build and send an HTTP request to ChromaDB.
-     */
-    private function request(string $method, string $endpoint, array $data = []): Response
-    {
-        $headers = ['Content-Type' => 'application/json'];
-
-        if ($this->apiKey) {
-            $headers['X-Chroma-Token'] = $this->apiKey;
-        }
-
-        return Http::withHeaders($headers)
-            ->timeout($this->timeout)
-            ->$method($this->baseUrl.$endpoint, $data);
     }
 }

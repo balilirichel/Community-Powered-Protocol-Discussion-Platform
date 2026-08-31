@@ -18,7 +18,7 @@ class IngestPdf extends Command
     {
         $path = $this->argument('path');
 
-        if (! isAbsolutePath($path)) {
+        if (! str_starts_with($path, '/')) {
             $basePath = storage_path('app/public/knowledgebase');
             $path = $basePath.DIRECTORY_SEPARATOR.$path;
         }

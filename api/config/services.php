@@ -38,7 +38,7 @@ return [
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
         'platform_name' => env('PLATFORM_NAME', 'this platform'),
-        'embedding_model' => env('GEMINI_EMBEDDING_MODEL', 'text-embedding-004'),
+        'embedding_model' => env('GEMINI_EMBEDDING_MODEL', 'gemini-embedding-001'),
     ],
 
     'make' => [

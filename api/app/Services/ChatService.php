@@ -23,7 +23,7 @@ class ChatService
         $this->embedding = $embedding;
     }
 
-    private const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+    private const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent';
 
     private const GUARDRAIL_PROMPT = <<<'PROMPT'
 You are the assistant for {platform}, a community discussion platform.
@@ -85,6 +85,7 @@ PROMPT;
         $kbEntries = $this->retrieveRelevantEntries($message);
         $pdfChunks = $this->retrievePdfChunks($message);
 
+      
         if ($kbEntries->isEmpty() && empty($pdfChunks)) {
             $reply = $this->buildOffTopicReply();
 
@@ -179,14 +180,14 @@ PROMPT;
             }
 
             $collectionId = $this->chromaDb->getOrCreateCollection(
-                config('chromadb.collection', 'pdf_documents'),
+                config('pdf-ingestion.collection', 'pdf_documents'),
             );
 
             if ($collectionId === null) {
                 return [];
             }
 
-            $topK = (int) config('chromadb.top_k', 5);
+            $topK = (int) config('pdf-ingestion.top_k', 5);
 
             $results = $this->chromaDb->queryCollection($collectionId, $queryEmbedding, $topK);
 
@@ -265,7 +266,7 @@ PROMPT;
         $fullPrompt = $systemPrompt."\n\nCONVERSATION HISTORY:\n{$historyText}\nUser: {$userMessage}\nAssistant:";
 
         try {
-            $response = Http::timeout(10)
+            $response = Http::timeout(60)
                 ->withHeaders([
                     'Content-Type' => 'application/json',
                 ])

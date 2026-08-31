@@ -36,7 +36,7 @@ class PdfIngestionService
         $filename = basename($pdfPath);
 
         $collectionId = $this->chromaDb->getOrCreateCollection(
-            config('chromadb.collection', 'pdf_documents'),
+            config('pdf-ingestion.collection', 'pdf_documents'),
         );
 
         if ($collectionId === null) {
@@ -47,8 +47,8 @@ class PdfIngestionService
         $pdf = $parser->parseFile($pdfPath);
         $pages = $pdf->getPages();
 
-        $chunkSize = config('chromadb.chunk_size', 500);
-        $chunkOverlap = config('chromadb.chunk_overlap', 50);
+        $chunkSize = config('pdf-ingestion.chunk_size', 500);
+        $chunkOverlap = config('pdf-ingestion.chunk_overlap', 50);
 
         $allChunks = [];
         $allMetadatas = [];
@@ -123,7 +123,7 @@ class PdfIngestionService
     public function deleteByFilename(string $filename): bool
     {
         $collectionId = $this->chromaDb->getOrCreateCollection(
-            config('chromadb.collection', 'pdf_documents'),
+            config('pdf-ingestion.collection', 'pdf_documents'),
         );
 
         if ($collectionId === null) {

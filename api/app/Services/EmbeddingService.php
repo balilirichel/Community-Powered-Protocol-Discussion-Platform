@@ -129,6 +129,7 @@ class EmbeddingService
             );
 
             $requests = array_map(fn ($text) => [
+                'model' => "models/{$this->model}",
                 'content' => [
                     'parts' => [
                         ['text' => $text],
