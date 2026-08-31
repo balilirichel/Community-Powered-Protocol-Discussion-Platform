@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import HomePage from './pages/HomePage';
@@ -13,10 +13,15 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { PublicRoute } from './components/PublicRoute';
 import { useAuth } from './hooks/useAuth';
 import { AuthModalProvider } from './components/auth/AuthModalContext';
+import { useChat } from './hooks/useChat';
+import ChatLauncher from './components/chat/ChatLauncher';
+import ChatWindow from './components/chat/ChatWindow';
 
 function App() {
   const { token, fetchUser } = useAuth();
   const fetchedUserOnStartup = useRef(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const { messages, isLoading, sendMessage } = useChat();
 
   useEffect(() => {
     if (!token || fetchedUserOnStartup.current) {
@@ -28,6 +33,14 @@ function App() {
       // auth interceptor clears invalid token state on 401
     });
   }, [token, fetchUser]);
+
+  const handleToggleChat = useCallback(() => {
+    setIsChatOpen((prev) => !prev);
+  }, []);
+
+  const handleCloseChat = useCallback(() => {
+    setIsChatOpen(false);
+  }, []);
 
   return (
     <BrowserRouter>
@@ -107,6 +120,14 @@ function App() {
         closeOnClick
         pauseOnHover
         theme="colored"
+      />
+      <ChatLauncher isOpen={isChatOpen} onToggle={handleToggleChat} />
+      <ChatWindow
+        isOpen={isChatOpen}
+        onClose={handleCloseChat}
+        messages={messages}
+        isLoading={isLoading}
+        onSendMessage={sendMessage}
       />
     </BrowserRouter>
   );
