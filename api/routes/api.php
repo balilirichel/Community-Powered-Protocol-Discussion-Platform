@@ -11,6 +11,9 @@ use App\Http\Controllers\Api\v1\CommentController;
 use App\Http\Controllers\Api\v1\ReviewController;
 use App\Http\Controllers\Api\v1\VoteController;
 use App\Http\Controllers\Api\v1\SearchController;
+use App\Http\Controllers\Api\v1\ChatController;
+use App\Http\Controllers\Api\v1\KnowledgeBaseController;
+use App\Http\Controllers\Api\v1\Internal\BookingController as InternalBookingController;
 
 Route::bind('protocol', function ($value) {
     if (is_numeric($value)) {
@@ -113,6 +116,26 @@ Route::group(['prefix' => 'v1'], function () {
 
         Route::post('comments/{comment}/vote',  [VoteController::class, 'voteComment']);
         Route::delete('comments/{comment}/vote',[VoteController::class, 'unvoteComment']);
+
+        // Admin Knowledge Base routes
+        Route::middleware('admin')->prefix('admin')->group(function () {
+            Route::apiResource('knowledge-base', KnowledgeBaseController::class);
+        });
     
     });
+
+    // -------------------------------------------------------------------------
+    // Chat routes (public, rate-limited)
+    // -------------------------------------------------------------------------
+    Route::middleware('throttle:20,1')->prefix('chat')->group(function () {
+        Route::post('/session', [ChatController::class, 'session']);
+        Route::get('/messages/{conversation_id}', [ChatController::class, 'messages']);
+        Route::post('/message', [ChatController::class, 'message']);
+        Route::post('/booking', [ChatController::class, 'booking']);
+    });
+
+    // -------------------------------------------------------------------------
+    // Internal webhook callback (no auth — Make.com calls this)
+    // -------------------------------------------------------------------------
+    Route::post('/internal/bookings/{id}/synced', [InternalBookingController::class, 'synced']);
 });
